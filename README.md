@@ -27,5 +27,5 @@ git checkout <branch-name>
 - [ ] Change project name. Maybe Simplifinance or something like that.
 
 ### TODO (After everything else is done):
-- (Optional) Make a conversion to React Native. Should be simple.
-- Deploy Electron and React Native releases. No need for web (regular React) deployment.
+- [ ] \(Optional) Make a conversion to React Native. Should be simple.
+- [ ] Deploy Electron and React Native releases. No need for web (regular React) deployment.
