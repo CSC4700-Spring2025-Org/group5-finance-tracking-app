@@ -9,7 +9,8 @@ cd group5-finance-tracking-app
 npm install -g npm
 npm i
 
-# Start the development server for testing. This should open both the React app in the browser and the Electron app.
+# Start the development server for testing.
+# This should open both the React app in the browser and the Electron app.
 npm start
 
 # Create a new branch for development
