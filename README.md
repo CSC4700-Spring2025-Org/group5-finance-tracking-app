@@ -30,6 +30,7 @@ git checkout <branch-name>
 - See [Issues](https://github.com/CSC4700-Spring2025-Org/group5-finance-tracking-app/issues)
 - See [Kanban](https://github.com/orgs/CSC4700-Spring2025-Org/projects/22)
 - [ ] Change project name. Maybe Simplifinance or something like that.
+- [ ] Make milestones.
 
 ### TODO (After everything else is done):
 - [ ] \(Optional) Make a conversion to React Native. Should be simple.
