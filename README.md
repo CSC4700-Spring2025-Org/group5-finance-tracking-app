@@ -1,2 +1,5 @@
 # group5-finance-tracking-app
-test
+
+
+## Contributing
+- npm i
