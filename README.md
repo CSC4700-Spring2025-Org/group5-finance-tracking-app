@@ -3,10 +3,15 @@
 
 ## Contributing:
 ```bash
-# Setup
+# Install/update Node.js and npm
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash 
+nvm install node
+npm install -g npm
+
+# Project Setup
 git clone https://github.com/CSC4700-Spring2025-Org/group5-finance-tracking-app
 cd group5-finance-tracking-app
-npm install -g npm
+git remote set-url origin git@github.com:CSC4700-Spring2025-Org/group5-finance-tracking-app.git
 npm i
 
 # Start the development server for testing.
