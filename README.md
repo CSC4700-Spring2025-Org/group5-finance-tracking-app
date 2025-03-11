@@ -24,8 +24,8 @@ git checkout <branch-name>
 ## TODO:
 - See [Issues](https://github.com/CSC4700-Spring2025-Org/group5-finance-tracking-app/issues)
 - See [Kanban](https://github.com/orgs/CSC4700-Spring2025-Org/projects/22)
-- Change project name. Maybe Simplifinance or something like that.
+- [ ] Change project name. Maybe Simplifinance or something like that.
 
 ### TODO (After everything else is done):
-- Make a conversion to React Native. Should be simple.
+- (Optional) Make a conversion to React Native. Should be simple.
 - Deploy Electron and React Native releases. No need for web (regular React) deployment.
