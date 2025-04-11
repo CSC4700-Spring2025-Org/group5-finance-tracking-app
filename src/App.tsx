@@ -1,19 +1,10 @@
 import React, { useState } from 'react';
 import logo from './logo.svg';
 import './App.css';
-// import BalanceSheet from './accounting/BalanceSheet';
 import { Account } from './accounting/Account';
-// import { RecordList } from './accounting/HookTest';
+import BalanceSheet from './accounting/BalanceSheet';
 
-// function App() {
 const App: React.FC = () => {
-    // const asset = Asset(100, 'Cash');
-    // const [assetList, setAssetList] = React.useState([asset]);
-    // const newAsset = () => {
-    //     setAssetList([...assetList, Asset(200, 'test')]);
-    // }
-    //
-
     const [accounts, setAccounts] = useState<Array<{ name: string; value: number }>>([
         { name: 'Cash', value: 100 },
     ]);
@@ -33,6 +24,7 @@ const App: React.FC = () => {
                     />
                 ))}
                 <button onClick={addAccount}>Add Account</button>
+                <BalanceSheet />
 
                 <img src={logo} className="App-logo" alt="logo" />
                 <p>

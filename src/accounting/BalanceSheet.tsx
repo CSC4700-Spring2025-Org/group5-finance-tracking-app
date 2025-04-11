@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-// import { Asset, Liability, RecordList } from './Account';
-import { iFinancialStatement, iAccount } from './types';
+import { Account, Asset, Liability } from './Account';
+// import { iFinancialStatement, iAccount } from './types';
 
 // const BalanceSheet = (): iFinancialStatement => {
 // const BalanceSheet = (): React.FC => {
@@ -10,11 +10,18 @@ const BalanceSheet = () => {
     // const [assets, setAssets] = useState<iAccount[]>([Asset(1000, 'Cash')]);
     // const [liabilities, setLiabilities] = useState([Liability(500, 'Accounts Payable')]);
 
-    // const recordList = RecordList([Asset(1000, 'Cash')]);
 
     // const c = Asset(1000, 'Cash');
     // const ar = Asset(2000, 'Accounts Receivable');
     // const liability = Liability(500, 'Accounts Payable');
+
+    const [accounts, setAccounts] = useState<Array<{ name: string; value: number }>>([
+        { name: 'Cash', value: 100 },
+    ]);
+
+    const addAccount = () => {
+        setAccounts([...accounts, { name: 'New Account', value: 0 }]);
+    };
 
     const today = new Date().toLocaleDateString('en-US', {
         year: 'numeric',
@@ -22,23 +29,23 @@ const BalanceSheet = () => {
         day: 'numeric',
     });
 
-    const [newAssetName, setNewAssetName] = useState('');
-    const [newAssetAmount, setNewAssetAmount] = useState('');
-    const [newLiabilityName, setNewLiabilityName] = useState('');
-    const [newLiabilityAmount, setNewLiabilityAmount] = useState('');
+    // const [newAssetName, setNewAssetName] = useState('');
+    // const [newAssetAmount, setNewAssetAmount] = useState('');
+    // const [newLiabilityName, setNewLiabilityName] = useState('');
+    // const [newLiabilityAmount, setNewLiabilityAmount] = useState('');
 
-    function addAsset() {
+    // function addAsset() {
+    // //
+    // // } addAsset = () => {
+    //     // if (!newAssetName || isNaN(Number(newAssetAmount))) return;
+    //     // setAssets([...assets, Asset(Number(newAssetAmount), newAssetName)]);
+    //     // setNewAssetName('');
+    //     // setNewAssetAmount('');
     //
-    // } addAsset = () => {
-        // if (!newAssetName || isNaN(Number(newAssetAmount))) return;
-        // setAssets([...assets, Asset(Number(newAssetAmount), newAssetName)]);
-        // setNewAssetName('');
-        // setNewAssetAmount('');
-
-        // recordList.addRecord(Asset(Number(newAssetAmount), newAssetName));
-        setNewAssetName('');
-        setNewAssetAmount('');
-    };
+    //     // recordList.addRecord(Asset(Number(newAssetAmount), newAssetName));
+    //     setNewAssetName('');
+    //     setNewAssetAmount('');
+    // };
 
 
     // setAssets([...assets, Asset(200, "test")]);
@@ -64,32 +71,31 @@ const BalanceSheet = () => {
     //     );
     // }
 
-    // const component = () => (
-    // return (
-    //     <div className="financial-statement">
-    //         <div className="fs-header">
-    //             <h2>Balance Sheet as of {today}</h2>
-    //         </div>
-    //         <div style={{ display: "flex" }}>
-    //             {recordList.component()}
-    //             <div className="record-list">
-    //                 <p className="record-list-header">Assets</p>
-    //                 {assets.map((asset, i) => (
-    //                     <div key={i}>{asset.record()}</div>
-    //                 ))}
-    //                 {addInputField()}
-    //             </div>
-    //             <div className="record-list">
-    //                 <p className="record-list-header">Liabilities</p>
-    //                 {liability.record()}
-    //             </div>
-    //         </div>
-    //     </div>
-    // );
-    //
-    // return {
-    //     component
-    // }
+    return (
+        <div className="financial-statement">
+            <div className="fs-header">
+                <h2>Balance Sheet as of {today}</h2>
+            </div>
+            <div style={{ display: "flex" }}>
+                <div className="record-list">
+                    <p className="record-list-header">Assets</p>
+
+                    {accounts.map((account, index) => (
+                        <Account
+                            key={index}
+                            initialName={account.name}
+                            initialValue={account.value}
+                        />
+                    ))}
+                    <button onClick={addAccount}>Add Account</button>
+                </div>
+                <div className="record-list">
+                    <p className="record-list-header">Liabilities</p>
+                </div>
+            </div>
+        </div>
+
+    )
 }
 
 export default BalanceSheet;
