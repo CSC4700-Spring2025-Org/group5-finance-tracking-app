@@ -1,0 +1,60 @@
+.record {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px dotted #ccc;
+    margin: 1px;
+    padding: 5px;
+    font-size: small;
+}
+
+.financial-statement {
+    display: flex;
+    width: 50vw;
+    flex-direction: column;
+    border: 1px solid #ccc;
+    margin: 1px;
+}
+
+.record-list {
+    width: 50%;
+    list-style: none;
+    flex: 1;
+    padding: 5px;
+}
+
+.record-list + .record-list {
+    border-left: 1px solid #ccc;
+}
+
+.record-list-header {
+    display: block;
+    font-size: large;
+    font-weight: bold;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.fs-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-bottom: 1px solid #ccc;
+    margin: 1px;
+    font-size: medium;
+}
+
+.input-account {
+    display: flex;
+}
+
+.input-account-name {
+    width: 40%;
+}
+
+.input-account-amount {
+    width: 40%;
+}
+.input-account-button {
+    width: 20%;
+}
