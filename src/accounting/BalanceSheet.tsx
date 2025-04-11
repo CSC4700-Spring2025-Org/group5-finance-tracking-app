@@ -19,8 +19,18 @@ const BalanceSheet = () => {
         { name: 'Cash', value: 100 },
     ]);
 
-    const addAccount = () => {
-        setAccounts([...accounts, { name: 'New Account', value: 0 }]);
+    const addAccount = (accountName: string, accountValue: number) => {
+        setAccounts([...accounts, { name: accountName, value: accountValue }]);
+    };
+    const [newAssetName, setNewAssetName] = useState('');
+    const [newAssetAmount, setNewAssetAmount] = useState('');
+    const [newLiabilityName, setNewLiabilityName] = useState('');
+    const [newLiabilityAmount, setNewLiabilityAmount] = useState('');
+
+    const handleAddClick = () => {
+        addAccount(newAssetName || 'Unnamed', Number(newAssetAmount) || 0);
+        setNewAssetName('');
+        setNewAssetAmount('');
     };
 
     const today = new Date().toLocaleDateString('en-US', {
@@ -29,10 +39,7 @@ const BalanceSheet = () => {
         day: 'numeric',
     });
 
-    // const [newAssetName, setNewAssetName] = useState('');
-    // const [newAssetAmount, setNewAssetAmount] = useState('');
-    // const [newLiabilityName, setNewLiabilityName] = useState('');
-    // const [newLiabilityAmount, setNewLiabilityAmount] = useState('');
+
 
     // function addAsset() {
     // //
@@ -51,23 +58,23 @@ const BalanceSheet = () => {
     // setAssets([...assets, Asset(200, "test")]);
     // const addInputField = (): JSX.Element => {
     //     return (
-    //         <div className="input-account">
-    //             <input
-    //                 className="input-account-name"
-    //                 type="text"
-    //                 placeholder="Asset Name"
-    //                 value={newAssetName}
-    //                 onChange={(e) => setNewAssetName(e.target.value)}
-    //             />
-    //             <input
-    //                 className="input-account-amount"
-    //                 type="number"
-    //                 placeholder="Amount"
-    //                 value={newAssetAmount}
-    //                 onChange={(e) => setNewAssetAmount(e.target.value)}
-    //             />
-    //             <button className="input-account-button" onClick={e => recordList.addRecord(Asset(Number(newAssetAmount), newAssetName))}>Add</button>
-    //         </div>
+            // <div className="input-account">
+            //     <input
+            //         className="input-account-name"
+            //         type="text"
+            //         placeholder="Asset Name"
+            //         value={newAssetName}
+            //         onChange={(e) => setNewAssetName(e.target.value)}
+            //     />
+            //     <input
+            //         className="input-account-amount"
+            //         type="number"
+            //         placeholder="Amount"
+            //         value={newAssetAmount}
+            //         onChange={(e) => setNewAssetAmount(e.target.value)}
+            //     />
+            //     <button className="input-account-button" onClick={e => recordList.addRecord(Asset(Number(newAssetAmount), newAssetName))}>Add</button>
+            // </div>
     //     );
     // }
 
@@ -87,7 +94,24 @@ const BalanceSheet = () => {
                             initialValue={account.value}
                         />
                     ))}
-                    <button onClick={addAccount}>Add Account</button>
+                    <div className="input-account">
+                        <input
+                            className="input-account-name"
+                            type="text"
+                            placeholder="Asset Name"
+                            value={newAssetName}
+                            onChange={(e) => setNewAssetName(e.target.value)}
+                        />
+                        <input
+                            className="input-account-amount"
+                            type="number"
+                            placeholder="Amount"
+                            value={newAssetAmount}
+                            onChange={(e) => setNewAssetAmount(e.target.value)}
+                        />
+                        <button className="input-account-button" onClick={handleAddClick}>Add</button>
+                    </div>
+                    <button onClick={handleAddClick}>Add Account</button>
                 </div>
                 <div className="record-list">
                     <p className="record-list-header">Liabilities</p>
