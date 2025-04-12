@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Account, Asset, Liability } from './Account';
+import RecordList from './RecordList';
 
 const BalanceSheet = () => {
     const KNOWN_ASSETS = ['Cash', 'Accounts Receivable', 'Property', 'Investments', 'Inventory'];
@@ -9,11 +10,37 @@ const BalanceSheet = () => {
     const [newLiabilityName, setNewLiabilityName] = useState('');
     const [newLiabilityAmount, setNewLiabilityAmount] = useState('');
 
+    const assetNameInputRef = React.useRef<HTMLInputElement>(null);
+    const assetAmountInputRef = React.useRef<HTMLInputElement>(null);
+
     const [hoveringAdd, setHoveringAdd] = useState(false);
     const [hoveringEdit, setHoveringEdit] = useState(false);
 
     const [editMode, setEditMode] = useState(false);
     const [addMode, setAddMode] = useState(false);
+
+    // Focuses the asset name input when add mode is activated
+    useEffect(() => {
+        if (addMode && assetNameInputRef.current) {
+            assetNameInputRef.current.focus();
+        }
+    }, [addMode]);
+
+    // Turns off add mode when 'Escape' key is pressed
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                setAddMode(false);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, []);
+
 
     const [accounts, setAccounts] = useState<Array<{ name: string; value: number }>>([
         { name: 'Cash', value: 100 },
@@ -62,9 +89,7 @@ const BalanceSheet = () => {
                     {(editMode ? KNOWN_ASSETS : accounts.map(a => a.name)).map((assetName, index) => {
                         const match = accounts.find(a => a.name === assetName);
                         const value = match ? match.value : 0;
-
                         return (
-
                             <Account
                                 key={index}
                                 initialValue={value}
@@ -76,11 +101,17 @@ const BalanceSheet = () => {
                         <div className="input-account">
                             <div className="input-wrapper">
                                 <input
+                                    ref={assetNameInputRef}
                                     className="input-account-name"
                                     type="text"
                                     placeholder="Asset Name"
                                     value={newAssetName}
                                     onChange={(e) => setNewAssetName(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if ((e.key === 'Enter') && assetAmountInputRef.current) {
+                                            assetAmountInputRef.current.focus();
+                                        }
+                                    }}
                                 />
                                 {suggestions.length > 0 && (
                                     <ul className="suggestions">
@@ -96,21 +127,32 @@ const BalanceSheet = () => {
                                 )}
                             </div>
                             <input
+                                ref={assetAmountInputRef}
                                 className="input-account-amount"
                                 type="number"
                                 placeholder="Amount"
                                 value={newAssetAmount}
                                 onChange={(e) => setNewAssetAmount(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        handleAddClick();
+                                        assetNameInputRef.current?.focus();
+                                    }
+                                }}
                             />
                             <button className="input-account-button" onClick={handleAddClick}>Add</button>
                         </div>
-
-
                         : null}
                 </div>
-                <div className="record-list">
-                    <p className="record-list-header">Liabilities</p>
-                </div>
+               <RecordList 
+                    title="Assets"
+                    accounts={accounts}
+                    editMode={editMode}
+                    knownNames={KNOWN_ASSETS}
+                    setAccounts={setAccounts}
+                    setEditMode={setEditMode}
+            />
+
             </div>
         </div>
 
