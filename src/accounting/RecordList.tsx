@@ -35,8 +35,9 @@ const RecordList: React.FC<RecordListProps> = ({
     const [newAccountValue, setNewAccountValue] = React.useState('');
     const [hoveringAdd, setHoveringAdd] = useState(false);
     const [hoveringEdit, setHoveringEdit] = useState(false);
-    // const [editMode, setEditMode] = useState(false);
     const [addMode, setAddMode] = useState(false);
+    const [highlightedIndex, setHighlightedIndex] = useState(-1);
+    const [showSuggestions, setShowSuggestions] = useState(true);
 
     const accountNameInputRef = React.useRef<HTMLInputElement>(null);
     const accountValueInputRef = React.useRef<HTMLInputElement>(null);
@@ -62,6 +63,8 @@ const RecordList: React.FC<RecordListProps> = ({
             window.removeEventListener('keydown', handleKeyDown);
         };
     }, []);
+
+
 
     const addAccount = (accountName: string, accountValue: number) => {
         setAccounts([...accounts, { name: accountName, value: accountValue }]);
@@ -109,25 +112,68 @@ const RecordList: React.FC<RecordListProps> = ({
             {addMode ?
                 <div className="input-account">
                     <div className="input-wrapper">
-                        <input
-                            ref={accountNameInputRef}
-                            className="input-account-name"
-                            type="text"
-                            placeholder="Asset Name"
-                            value={newAccountName}
-                            onChange={(e) => setNewAccountName(e.target.value)}
-                            onKeyDown={(e) => {
-                                if ((e.key === 'Enter') && accountValueInputRef.current) {
-                                    accountValueInputRef.current.focus();
-                                }
-                            }}
-                        />
-                        {suggestions.length > 0 && (
+                        <div className="ghost-input-wrapper">
+                            <div className="ghost-text">
+                                {suggestions.length > 0 &&
+                                    suggestions[0].toLowerCase().startsWith(newAccountName.toLowerCase()) &&
+                                    newAccountName !== '' ? (
+                                        <>
+                                            <span className="invisible-text">{newAccountName}</span>
+                                            <span className="ghost-suggestion">
+                                                {suggestions[0].slice(newAccountName.length)}
+                                            </span>
+                                        </>
+                                    ) : null}
+                            </div>
+                            <input
+                                ref={accountNameInputRef}
+                                className="input-account-name"
+                                type="text"
+                                placeholder="Account Name"
+                                value={newAccountName}
+                                onChange={(e) => {
+                                    setNewAccountName(e.target.value);
+                                    setShowSuggestions(true);
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'ArrowDown') {
+                                        setHighlightedIndex((prev) => Math.min(prev + 1, suggestions.length - 1));
+                                    } else if (e.key === 'ArrowUp') {
+                                        setHighlightedIndex((prev) => Math.max(prev - 1, 0));
+                                    } else if (e.key === 'Enter') {
+                                        if (highlightedIndex >= 0 && highlightedIndex < suggestions.length)
+                                            setNewAccountName(suggestions[highlightedIndex]);
+                                        setShowSuggestions(false);
+                                        setHighlightedIndex(-1);
+                                        accountValueInputRef.current?.focus();
+                                    } else if (e.key === 'Tab') {
+                                        if (suggestions.length > 0 && suggestions[0].toLowerCase().startsWith(newAccountName.toLowerCase())) {
+                                            e.preventDefault();
+                                            setNewAccountName(suggestions[0]);
+                                            setShowSuggestions(false);
+                                            accountValueInputRef.current?.focus();
+                                        }
+                                    }
+                                }}
+                            />
+                        </div>
+                        {showSuggestions && suggestions.length > 0 && (
                             <ul className="suggestions">
                                 {suggestions.map((suggestion, i) => (
-                                    <li className="record"
+                                    <li 
+                                        className={`record ${highlightedIndex === i ? 'highlighted' : ''}`}
                                         key={i}
-                                        onClick={() => setNewAccountName(suggestion)}
+                                        onClick={() => {
+                                            setNewAccountName(suggestion);
+                                            setHighlightedIndex(-1);
+                                        }}
+                                        onMouseEnter={() => setHighlightedIndex(i)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                setNewAccountName(suggestion);
+                                                setHighlightedIndex(-1);
+                                            }
+                                        }}
                                     >
                                         {suggestion}
                                     </li>
@@ -154,7 +200,7 @@ const RecordList: React.FC<RecordListProps> = ({
                 : null}
 
 
-            <div className="record-total">
+            <div className="record">
                 <strong>Total {title}:</strong> ${total.toFixed(2)}
             </div>
         </div>

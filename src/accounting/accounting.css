@@ -14,6 +14,7 @@
     flex-direction: column;
     border: 1px solid #ccc;
     margin: 1px;
+    max-width: 600px;
 }
 
 .record-list {
@@ -128,9 +129,17 @@
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     margin:0;
     top:100%;
+    background-color: gray;
+}
+
+.suggestions .highlighted {
+    background-color: #eef;
+    cursor: pointer;
+
 }
 
 .suggestions li {
+    color: black;
     padding: 0px;
     cursor: pointer;
 }
@@ -144,4 +153,42 @@
     flex-direction: column;
     position: relative;
     width: 40%;
+}
+
+.record-total {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-top: 1px solid #ccc;
+    margin: 1px;
+    font-size: medium;
+}
+
+.real-input, 
+.ghost-text {
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: gray;
+  opacity: 0.5;
+  pointer-events: none;
+  font-family: inherit;
+  font-size: small;
+  z-index: 1;
+  white-space: pre;
+}
+
+.invisible-text {
+  visibility: hidden;
+}
+
+.ghost-suggestion {
+  color: black;
+}
+
+.ghost-input-wrapper {
+  position: relative;
+  font-family: inherit;
+    display: flex ;
+    flex-direction: column;
 }
