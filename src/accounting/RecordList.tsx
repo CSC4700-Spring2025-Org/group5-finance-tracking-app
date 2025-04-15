@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Account } from './Account';
+import { Account, AccountComponent } from './Account';
 
 interface AccountType {
     name: string;
@@ -28,7 +28,8 @@ const RecordList: React.FC<RecordListProps> = ({
     const total = accounts.reduce((sum, account) => sum + account.value, 0);
 
     const itemsToRender = editMode && knownNames.length > 0
-        ? knownNames
+        // ? knownNames
+         ? Array.from(new Set([...knownNames, ...accounts.map(a => a.name)]))
         : accounts.map(a => a.name);
 
     const [newAccountName, setNewAccountName] = React.useState('');
@@ -38,6 +39,8 @@ const RecordList: React.FC<RecordListProps> = ({
     const [addMode, setAddMode] = useState(false);
     const [highlightedIndex, setHighlightedIndex] = useState(-1);
     const [showSuggestions, setShowSuggestions] = useState(true);
+    const [editableIndex, setEditableIndex] = useState<number | null>(null);
+    const [editableValue, setEditableValue] = useState<number>(0);
 
     const accountNameInputRef = React.useRef<HTMLInputElement>(null);
     const accountValueInputRef = React.useRef<HTMLInputElement>(null);
@@ -65,7 +68,6 @@ const RecordList: React.FC<RecordListProps> = ({
     }, []);
 
 
-
     const addAccount = (accountName: string, accountValue: number) => {
         setAccounts([...accounts, { name: accountName, value: accountValue }]);
     };
@@ -82,7 +84,9 @@ const RecordList: React.FC<RecordListProps> = ({
     );
 
     return (
-        <div className="record-list">
+        <div className="record-list"
+            onMouseLeave={() => setAddMode(false)}
+        >
 
             <div className="record-list-header">
                 <button className="edit-mode-button" onClick={() => setEditMode(!editMode)}
@@ -101,11 +105,24 @@ const RecordList: React.FC<RecordListProps> = ({
                 const value = match?.value ?? 0;
 
                 return (
-                    <Account
-                        key={index}
+                    <AccountComponent
+                        key={name}
                         initialName={name}
                         initialValue={value}
-                        isSet={value !== 0}
+                        initialIsSet={value !== 0}
+                        editMode={editMode}
+                        onChange={(updatedValue) => {
+                            setAccounts(prev => {
+                                const index = prev.findIndex(a => a.name === name);
+                                if (index !== -1) {
+                                    const updated = [...prev];
+                                    updated[index] = { ...updated[index], value: updatedValue };
+                                    return updated;
+                                } else {
+                                    return [...prev, { name, value: updatedValue }];
+                                }
+                            });
+                        }}
                     />
                 );
             })}
@@ -198,8 +215,6 @@ const RecordList: React.FC<RecordListProps> = ({
                     <button className="input-account-button" onClick={handleAddClick}>Add</button>
                 </div>
                 : null}
-
-
             <div className="record">
                 <strong>Total {title}:</strong> ${total.toFixed(2)}
             </div>
@@ -208,4 +223,3 @@ const RecordList: React.FC<RecordListProps> = ({
 };
 
 export default RecordList;
-

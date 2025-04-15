@@ -8,6 +8,11 @@
     font-size: small;
 }
 
+.editable-record:hover {
+  background-color: cadetblue;
+  cursor: pointer;
+}
+
 .financial-statement {
     display: flex;
     width: 50vw;
