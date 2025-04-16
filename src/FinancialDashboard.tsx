@@ -1,5 +1,6 @@
 import React from 'react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Bell, User, Plus, CreditCard, ArrowUpDown, Receipt, DollarSign, PieChart, Calendar, Settings, TrendingUp, Home, ChevronDown, FileText } from 'lucide-react';
 
@@ -34,6 +35,7 @@ const goalsData = [
 ];
 
 const FinancialDashboard = () => {
+  const navigate = useNavigate();
   const [chartType, setChartType] = useState('bar');
   const [reportsDropdownOpen, setReportsDropdownOpen] = useState(false);
   
@@ -108,18 +110,27 @@ const FinancialDashboard = () => {
                   className="absolute top-full left-0 mt-1 bg-white rounded-md shadow-lg py-2 w-64 z-10 border border-gray-200"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <a href="#" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+                  <button 
+                    onClick={() => navigate('/reports/income-statement')}
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 w-full text-left"
+                  >
                     <FileText className="h-4 w-4 mr-2" />
                     Income Statement
-                  </a>
-                  <a href="#" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+                  </button>
+                  <button 
+                    onClick={() => navigate('/accounting/balance-sheet')}
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 w-full text-left"
+                  >
                     <FileText className="h-4 w-4 mr-2" />
                     Balance Sheet
-                  </a>
-                  <a href="#" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+                  </button>
+                  <button 
+                    onClick={() => navigate('/reports/cash-flows')}
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 w-full text-left"
+                  >
                     <FileText className="h-4 w-4 mr-2" />
                     Statement of Cash Flows
-                  </a>
+                  </button>
                 </div>
               )}
             </div>
