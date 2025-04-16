@@ -37,15 +37,17 @@ type Props = {
     initialIsSet: boolean;
     editMode: boolean;
     onChange?: (value: number) => void;
+    initialLiquidityType: string;
 };
 
-export const AccountComponent: React.FC<Props> = ({ initialName, initialValue, initialIsSet, editMode, onChange }) => {
+export const AccountComponent: React.FC<Props> = ({ initialName, initialValue, initialIsSet, editMode, onChange, initialLiquidityType = 'Custom' }) => {
     const { name, setName, value, setValue, record, isSet, setIsSet } = useAccount(initialValue, initialName, initialIsSet);
 
     const [hovering, setHovering] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [currentValue, setCurrentValue] = useState(value);
     const [confirmed, setConfirmed] = useState(false);
+    const [liquidityType, setLiquidityType] = useState(initialLiquidityType);
 
     useEffect(() => {
         setValue(initialValue); 
@@ -68,7 +70,7 @@ export const AccountComponent: React.FC<Props> = ({ initialName, initialValue, i
                     )}
             </div>
             {(isEditing || hovering) && editMode && !confirmed ? (
-                <div className="input-wrapper">
+                <div className="input-wrapper" style={{width: "30%"}}>
                     <input
                         type="number"
                         value={currentValue}

@@ -1,9 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Account, AccountComponent } from './Account';
 
+type LiquidityType =
+  | 'cash-equivalent'
+  | 'short-term'
+  | 'accounts-receivable'
+  | 'inventory'
+  | 'ppe'
+  | 'long-term'
+  | 'custom';
+
 interface AccountType {
     name: string;
     value: number;
+    liquidityType?: LiquidityType;
 }
 
 interface RecordListProps {
@@ -27,9 +37,40 @@ const RecordList: React.FC<RecordListProps> = ({
 }) => {
     const total = accounts.reduce((sum, account) => sum + account.value, 0);
 
+    const liquidityRank = {
+        'cash-equivalent': 1,
+        'short-term': 2, //marketable securities
+        'accounts-receivable': 3,
+        'inventory': 4,
+        'ppe': 5,
+        'long-term': 6, //intangible assets and deferred items
+        'custom': 100
+    };
+
+    // Sort by liquidity rank, and then by name if liquidity is the same
+    const sortedAccounts = accounts
+    .sort((a, b) => {
+        const liquidityA = a?.liquidityType && liquidityRank[a.liquidityType] !== undefined
+            ? liquidityRank[a.liquidityType]
+            : 10;
+        const liquidityB = b?.liquidityType && liquidityRank[b.liquidityType] !== undefined
+            ? liquidityRank[b.liquidityType]
+            : 10;
+        if (liquidityA === liquidityB) {
+            return a.name.localeCompare(b.name);
+        }
+        return liquidityA - liquidityB;
+    });
+
     const itemsToRender = editMode && knownNames.length > 0
-        // ? knownNames
-         ? Array.from(new Set([...knownNames, ...accounts.map(a => a.name)]))
+         ? Array.from(new Set([...knownNames, ...sortedAccounts.map(a => a.name)]))
+        .sort((a, b) => {
+            const aVal = accounts.find(ac => ac.name === a)?.value ?? 0;
+            const bVal = accounts.find(ac => ac.name === b)?.value ?? 0;
+            if (aVal === 0 && bVal !== 0) return 1;
+            if (aVal !== 0 && bVal === 0) return -1;
+            return 0;
+        })
         : accounts.map(a => a.name);
 
     const [newAccountName, setNewAccountName] = React.useState('');
@@ -55,9 +96,8 @@ const RecordList: React.FC<RecordListProps> = ({
     // Turns off add mode when 'Escape' key is pressed
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') {
+            if (e.key === 'Escape')
                 setAddMode(false);
-            }
         };
 
         window.addEventListener('keydown', handleKeyDown);
@@ -86,8 +126,13 @@ const RecordList: React.FC<RecordListProps> = ({
     return (
         <div className="record-list"
             onMouseLeave={() => setAddMode(false)}
-        >
+            onKeyDown={(e) => {
+                if (e.key === 'a') {
+                    setAddMode(true);
+                }
+            }}
 
+        >
             <div className="record-list-header">
                 <button className="edit-mode-button" onClick={() => setEditMode(!editMode)}
                     onMouseEnter={() => setHoveringEdit(true)}
@@ -111,6 +156,7 @@ const RecordList: React.FC<RecordListProps> = ({
                         initialValue={value}
                         initialIsSet={value !== 0}
                         editMode={editMode}
+                        initialLiquidityType={match?.liquidityType || 'custom'}
                         onChange={(updatedValue) => {
                             setAccounts(prev => {
                                 const index = prev.findIndex(a => a.name === name);
