@@ -1,11 +1,50 @@
 import React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Bell, User, Plus, CreditCard, ArrowUpDown, Receipt, DollarSign, PieChart, Calendar, Settings, TrendingUp, Home, ChevronDown, FileText } from 'lucide-react';
+import AddTransactionModal from './AddTransactionModal';
 
-// Sample data
-const data = [
+// Define interfaces for type safety
+interface Transaction {
+  id: number;
+  date: string;
+  payee: string;
+  category: string;
+  amount: number;
+  customCategory?: string;
+}
+
+interface BudgetItem {
+  category: string;
+  spent: number;
+  budget: number;
+  percent: number;
+}
+
+interface Goal {
+  name: string;
+  saved: number;
+  target: number;
+  percent: number;
+}
+
+interface ChartDataPoint {
+  name: string;
+  income: number;
+  expenses: number;
+}
+
+// Initial sample data
+const initialTransactionData: Transaction[] = [
+  { id: 1, date: 'Apr 15', payee: 'Grocery Store', category: 'Food', amount: -78.52 },
+  { id: 2, date: 'Apr 14', payee: 'Direct Deposit', category: 'Income', amount: 1250.00 },
+  { id: 3, date: 'Apr 13', payee: 'Coffee Shop', category: 'Dining', amount: -4.75 },
+  { id: 4, date: 'Apr 12', payee: 'Gas Station', category: 'Transport', amount: -45.80 },
+  { id: 5, date: 'Apr 10', payee: 'Utility Bill', category: 'Bills', amount: -120.35 },
+];
+
+const initialChartData: ChartDataPoint[] = [
   { name: 'Jan', income: 4000, expenses: 2400 },
   { name: 'Feb', income: 3000, expenses: 1398 },
   { name: 'Mar', income: 2000, expenses: 3800 },
@@ -14,30 +53,47 @@ const data = [
   { name: 'Jun', income: 3390, expenses: 2300 },
 ];
 
-const transactionData = [
-  { id: 1, date: 'Apr 15', payee: 'Grocery Store', category: 'Food', amount: -78.52 },
-  { id: 2, date: 'Apr 14', payee: 'Direct Deposit', category: 'Income', amount: 1250.00 },
-  { id: 3, date: 'Apr 13', payee: 'Coffee Shop', category: 'Dining', amount: -4.75 },
-  { id: 4, date: 'Apr 12', payee: 'Gas Station', category: 'Transport', amount: -45.80 },
-  { id: 5, date: 'Apr 10', payee: 'Utility Bill', category: 'Bills', amount: -120.35 },
-];
-
-const budgetData = [
+const initialBudgetData: BudgetItem[] = [
   { category: 'Food & Dining', spent: 450, budget: 600, percent: 75 },
   { category: 'Transportation', spent: 250, budget: 300, percent: 83 },
   { category: 'Entertainment', spent: 180, budget: 200, percent: 90 },
   { category: 'Shopping', spent: 120, budget: 300, percent: 40 },
 ];
 
-const goalsData = [
+const initialGoalsData: Goal[] = [
   { name: 'Vacation', saved: 2500, target: 5000, percent: 50 },
   { name: 'New Car', saved: 7500, target: 15000, percent: 50 },
 ];
+
+// Category mapping for budget updates
+const categoryToBudgetMapping: { [key: string]: string } = {
+  'Food': 'Food & Dining',
+  'Dining': 'Food & Dining',
+  'Transport': 'Transportation',
+  'Entertainment': 'Entertainment',
+  'Shopping': 'Shopping',
+};
 
 const FinancialDashboard = () => {
   const navigate = useNavigate();
   const [chartType, setChartType] = useState('bar');
   const [reportsDropdownOpen, setReportsDropdownOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // State for financial data
+  const [transactions, setTransactions] = useState<Transaction[]>(initialTransactionData);
+  const [chartData, setChartData] = useState<ChartDataPoint[]>(initialChartData);
+  const [budgetData, setBudgetData] = useState<BudgetItem[]>(initialBudgetData);
+  const [goalsData, setGoalsData] = useState<Goal[]>(initialGoalsData);
+  
+  // Financial metrics state
+  const [totalBalance, setTotalBalance] = useState(16420.65);
+  const [monthlyIncome, setMonthlyIncome] = useState(4250.00);
+  const [monthlyExpenses, setMonthlyExpenses] = useState(2845.17);
+  const [monthlySavings, setMonthlySavings] = useState(1404.83);
+  
+  // Get current month name
+  const currentMonth = new Date().toLocaleString('default', { month: 'short' });
   
   const getBudgetColor = (percent: number) => {
     if (percent > 90) return 'text-red-500';
@@ -50,7 +106,7 @@ const FinancialDashboard = () => {
   };
 
   // Close dropdown when clicking outside
-  React.useEffect(() => {
+  useEffect(() => {
     const handleClickOutside = () => {
       if (reportsDropdownOpen) {
         setReportsDropdownOpen(false);
@@ -62,6 +118,108 @@ const FinancialDashboard = () => {
       document.removeEventListener('click', handleClickOutside);
     };
   }, [reportsDropdownOpen]);
+
+  // Function to handle adding a new transaction
+  const handleAddTransaction = (newTransaction: Transaction) => {
+    // Add the transaction to the list
+    const updatedTransactions = [newTransaction, ...transactions];
+    setTransactions(updatedTransactions);
+    
+    // Update financial metrics
+    updateFinancialMetrics(newTransaction);
+    
+    // Update chart data
+    updateChartData(newTransaction);
+    
+    // Update budget data if it's an expense
+    if (newTransaction.amount < 0) {
+      updateBudgetData(newTransaction);
+    }
+  };
+  
+  // Helper function to update financial metrics
+  const updateFinancialMetrics = (transaction: Transaction) => {
+    // Update total balance
+    setTotalBalance(prevBalance => prevBalance + transaction.amount);
+    
+    // Get current month from transaction date
+    const transactionMonth = transaction.date.split(' ')[0]; // e.g., "Apr"
+    
+    // Only update monthly income/expenses if transaction is from the current month
+    if (transactionMonth === currentMonth) {
+      if (transaction.amount > 0) {
+        // Update income
+        setMonthlyIncome(prevIncome => prevIncome + transaction.amount);
+      } else {
+        // Update expenses (convert negative to positive for display)
+        setMonthlyExpenses(prevExpenses => prevExpenses + Math.abs(transaction.amount));
+      }
+      
+      // Recalculate savings
+      const newIncome = transaction.amount > 0 ? 
+        monthlyIncome + transaction.amount : 
+        monthlyIncome;
+      
+      const newExpenses = transaction.amount < 0 ? 
+        monthlyExpenses + Math.abs(transaction.amount) : 
+        monthlyExpenses;
+        
+      setMonthlySavings(newIncome - newExpenses);
+    }
+  };
+  
+  // Helper function to update chart data
+  const updateChartData = (transaction: Transaction) => {
+    // Get month from transaction date
+    const transactionMonth = transaction.date.split(' ')[0]; // e.g., "Apr"
+    
+    // Find the corresponding month in chart data
+    const updatedChartData = chartData.map(dataPoint => {
+      if (dataPoint.name === transactionMonth) {
+        // Update income or expenses based on transaction type
+        if (transaction.amount > 0) {
+          return {
+            ...dataPoint,
+            income: dataPoint.income + transaction.amount
+          };
+        } else {
+          return {
+            ...dataPoint,
+            expenses: dataPoint.expenses + Math.abs(transaction.amount)
+          };
+        }
+      }
+      return dataPoint;
+    });
+    
+    setChartData(updatedChartData);
+  };
+  
+  // Helper function to update budget data
+  const updateBudgetData = (transaction: Transaction) => {
+    // Only proceed if transaction is an expense
+    if (transaction.amount >= 0) return;
+    
+    // Map transaction category to budget category
+    const budgetCategory = categoryToBudgetMapping[transaction.category] || transaction.category;
+    
+    // Find the corresponding budget item
+    const updatedBudgetData = budgetData.map(item => {
+      if (item.category === budgetCategory) {
+        const newSpent = item.spent + Math.abs(transaction.amount);
+        const newPercent = Math.round((newSpent / item.budget) * 100);
+        
+        return {
+          ...item,
+          spent: newSpent,
+          percent: newPercent
+        };
+      }
+      return item;
+    });
+    
+    setBudgetData(updatedBudgetData);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -155,34 +313,37 @@ const FinancialDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
           <div className="bg-white rounded-lg shadow p-6 flex flex-col">
             <span className="text-sm text-gray-500 mb-1">Total Balance</span>
-            <span className="text-3xl font-bold text-gray-800">$16,420.65</span>
+            <span className="text-3xl font-bold text-gray-800">${totalBalance.toFixed(2)}</span>
             <span className="mt-2 text-sm text-green-500 flex items-center">
               <TrendingUp className="h-4 w-4 mr-1" /> +2.4% this month
             </span>
           </div>
           
           <div className="bg-white rounded-lg shadow p-6 flex flex-col">
-            <span className="text-sm text-gray-500 mb-1">Income (Apr)</span>
-            <span className="text-2xl font-bold text-gray-800">$4,250.00</span>
+            <span className="text-sm text-gray-500 mb-1">Income ({currentMonth})</span>
+            <span className="text-2xl font-bold text-gray-800">${monthlyIncome.toFixed(2)}</span>
             <span className="mt-2 text-sm text-gray-500">+$1,250 from last month</span>
           </div>
           
           <div className="bg-white rounded-lg shadow p-6 flex flex-col">
-            <span className="text-sm text-gray-500 mb-1">Expenses (Apr)</span>
-            <span className="text-2xl font-bold text-gray-800">$2,845.17</span>
+            <span className="text-sm text-gray-500 mb-1">Expenses ({currentMonth})</span>
+            <span className="text-2xl font-bold text-gray-800">${monthlyExpenses.toFixed(2)}</span>
             <span className="mt-2 text-sm text-green-500">-$320 from last month</span>
           </div>
           
           <div className="bg-white rounded-lg shadow p-6 flex flex-col">
             <span className="text-sm text-gray-500 mb-1">Savings</span>
-            <span className="text-2xl font-bold text-gray-800">$1,404.83</span>
-            <span className="mt-2 text-sm text-green-500">33% of income</span>
+            <span className="text-2xl font-bold text-gray-800">${monthlySavings.toFixed(2)}</span>
+            <span className="mt-2 text-sm text-green-500">{Math.round((monthlySavings / monthlyIncome) * 100)}% of income</span>
           </div>
         </div>
         
         {/* Quick Actions */}
         <div className="flex flex-wrap gap-4 mb-6">
-          <button className="flex items-center rounded-md bg-blue-600 text-white px-4 py-2 text-sm font-medium">
+          <button 
+            className="flex items-center rounded-md bg-blue-600 text-white px-4 py-2 text-sm font-medium"
+            onClick={() => setIsModalOpen(true)}
+          >
             <Plus className="h-4 w-4 mr-2" /> Add Transaction
           </button>
           <button className="flex items-center rounded-md bg-white border border-gray-300 text-gray-700 px-4 py-2 text-sm font-medium">
@@ -227,7 +388,7 @@ const FinancialDashboard = () => {
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 {chartType === 'bar' ? (
-                  <BarChart data={data}>
+                  <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
                     <YAxis />
@@ -236,7 +397,7 @@ const FinancialDashboard = () => {
                     <Bar dataKey="expenses" fill="#EF4444" name="Expenses" />
                   </BarChart>
                 ) : (
-                  <LineChart data={data}>
+                  <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
                     <YAxis />
@@ -257,11 +418,11 @@ const FinancialDashboard = () => {
             </div>
             
             <div className="space-y-4">
-              {transactionData.map(transaction => (
+              {transactions.slice(0, 5).map(transaction => (
                 <div key={transaction.id} className="flex justify-between items-center p-3 hover:bg-gray-50 rounded-md transition-colors">
                   <div className="flex items-center">
                     <div className={`h-8 w-8 rounded-full flex items-center justify-center ${transaction.amount > 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                      {transaction.category === 'Income' ? <TrendingUp className="h-4 w-4" /> : <CreditCard className="h-4 w-4" />}
+                      {transaction.amount > 0 ? <TrendingUp className="h-4 w-4" /> : <CreditCard className="h-4 w-4" />}
                     </div>
                     <div className="ml-3">
                       <p className="text-sm font-medium text-gray-800">{transaction.payee}</p>
@@ -375,6 +536,13 @@ const FinancialDashboard = () => {
           </div>
         </div>
       </main>
+
+      {/* Add Transaction Modal */}
+      <AddTransactionModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onAddTransaction={handleAddTransaction} 
+      />
     </div>
   );
 };
