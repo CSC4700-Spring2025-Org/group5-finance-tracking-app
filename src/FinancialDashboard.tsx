@@ -44,14 +44,77 @@ const initialTransactionData: Transaction[] = [
   { id: 5, date: 'Apr 10', payee: 'Utility Bill', category: 'Bills', amount: -120.35 },
 ];
 
-const initialChartData: ChartDataPoint[] = [
-  { name: 'Jan', income: 4000, expenses: 2400 },
-  { name: 'Feb', income: 3000, expenses: 1398 },
-  { name: 'Mar', income: 2000, expenses: 3800 },
-  { name: 'Apr', income: 2780, expenses: 3908 },
-  { name: 'May', income: 4890, expenses: 2800 },
-  { name: 'Jun', income: 3390, expenses: 2300 },
-];
+// Create historical chart data for different time periods
+const generateChartData = (period: string): ChartDataPoint[] => {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+  const currentDay = now.getDate();
+  
+  // Format a date to display in the chart
+  const formatDateRange = (startDay: number, endDay: number, month: number, year: number): string => {
+    const startDate = new Date(year, month, startDay);
+    const endDate = new Date(year, month, endDay);
+    const startFormatted = startDate.toLocaleString('default', { month: 'short', day: 'numeric' });
+    const endFormatted = endDate.toLocaleString('default', { month: 'short', day: 'numeric' });
+    return `${startFormatted} - ${endFormatted}`;
+  };
+  
+  // This Month - show weekly date ranges
+  if (period === 'This Month') {
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const result: ChartDataPoint[] = [];
+    
+    // Create weekly ranges (e.g., "Apr 1 - Apr 7")
+    let startDay = 1;
+    while (startDay <= daysInMonth) {
+      const endDay = Math.min(startDay + 6, daysInMonth);
+      const dateRange = formatDateRange(startDay, endDay, currentMonth, currentYear);
+      
+      // Generate realistic data - higher values for weeks we've already passed
+      const isPastWeek = endDay < currentDay;
+      
+      result.push({
+        name: dateRange,
+        income: isPastWeek ? Math.floor(Math.random() * 1500) + 500 : 0,
+        expenses: isPastWeek ? Math.floor(Math.random() * 1200) + 300 : 0
+      });
+      
+      startDay = endDay + 1;
+    }
+    return result;
+  }
+  
+  // Last 3 Months
+  else if (period === 'Last 3 Months') {
+    const result: ChartDataPoint[] = [];
+    for (let i = 2; i >= 0; i--) {
+      const monthDate = new Date(currentYear, currentMonth - i, 1);
+      const monthName = monthDate.toLocaleString('default', { month: 'short' });
+      result.push({
+        name: monthName,
+        income: Math.floor(Math.random() * 4000) + 2000,
+        expenses: Math.floor(Math.random() * 3500) + 1500
+      });
+    }
+    return result;
+  }
+  
+  // This Year
+  else {
+    const result: ChartDataPoint[] = [];
+    for (let i = 0; i <= currentMonth; i++) {
+      const monthDate = new Date(currentYear, i, 1);
+      const monthName = monthDate.toLocaleString('default', { month: 'short' });
+      result.push({
+        name: monthName,
+        income: Math.floor(Math.random() * 4000) + 2000,
+        expenses: Math.floor(Math.random() * 3500) + 1500
+      });
+    }
+    return result;
+  }
+};
 
 const initialBudgetData: BudgetItem[] = [
   { category: 'Food & Dining', spent: 450, budget: 600, percent: 75 },
@@ -77,12 +140,13 @@ const categoryToBudgetMapping: { [key: string]: string } = {
 const FinancialDashboard = () => {
   const navigate = useNavigate();
   const [chartType, setChartType] = useState('bar');
+  const [chartTimePeriod, setChartTimePeriod] = useState('This Month');
   const [reportsDropdownOpen, setReportsDropdownOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   // State for financial data
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactionData);
-  const [chartData, setChartData] = useState<ChartDataPoint[]>(initialChartData);
+  const [chartData, setChartData] = useState<ChartDataPoint[]>(generateChartData('This Month'));
   const [budgetData, setBudgetData] = useState<BudgetItem[]>(initialBudgetData);
   const [goalsData, setGoalsData] = useState<Goal[]>(initialGoalsData);
   
@@ -103,6 +167,11 @@ const FinancialDashboard = () => {
   // Show confetti state
   const [showConfetti, setShowConfetti] = useState(false);
   const confettiContainerRef = useRef<HTMLDivElement | null>(null);
+  
+  // Update chart data when time period changes
+  useEffect(() => {
+    setChartData(generateChartData(chartTimePeriod));
+  }, [chartTimePeriod]);
   
   // Function to create confetti animation
   const createConfetti = () => {
@@ -271,29 +340,69 @@ const FinancialDashboard = () => {
   
   // Helper function to update chart data
   const updateChartData = (transaction: Transaction) => {
-    // Get month from transaction date
-    const transactionMonth = transaction.date.split(' ')[0]; // e.g., "Apr"
+    // Extract date parts from transaction
+    const [month, day] = transaction.date.split(' ');
+    const numericDay = parseInt(day);
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().toLocaleString('default', { month: 'short' });
     
-    // Find the corresponding month in chart data
-    const updatedChartData = chartData.map(dataPoint => {
-      if (dataPoint.name === transactionMonth) {
-        // Update income or expenses based on transaction type
-        if (transaction.amount > 0) {
-          return {
-            ...dataPoint,
-            income: dataPoint.income + transaction.amount
-          };
-        } else {
-          return {
-            ...dataPoint,
-            expenses: dataPoint.expenses + Math.abs(transaction.amount)
-          };
-        }
+    // Different update logic based on chart time period
+    if (chartTimePeriod === 'This Month') {
+      // For This Month, find which week range the transaction belongs to
+      if (month === currentMonth) {
+        setChartData(prev => 
+          prev.map(dataPoint => {
+            // Parse the date range (e.g., "Apr 1 - Apr 7")
+            const rangeParts = dataPoint.name.split(' - ');
+            if (rangeParts.length === 2) {
+              const startDateParts = rangeParts[0].split(' ');
+              const endDateParts = rangeParts[1].split(' ');
+              
+              // Extract the day numbers
+              const startDay = parseInt(startDateParts[1]);
+              const endDay = parseInt(endDateParts[1]);
+              
+              // Check if the transaction day falls within this range
+              if (numericDay >= startDay && numericDay <= endDay) {
+                if (transaction.amount > 0) {
+                  return {
+                    ...dataPoint,
+                    income: dataPoint.income + transaction.amount
+                  };
+                } else {
+                  return {
+                    ...dataPoint,
+                    expenses: dataPoint.expenses + Math.abs(transaction.amount)
+                  };
+                }
+              }
+            }
+            return dataPoint;
+          })
+        );
       }
-      return dataPoint;
-    });
-    
-    setChartData(updatedChartData);
+    } 
+    else if (chartTimePeriod === 'Last 3 Months' || chartTimePeriod === 'This Year') {
+      // For Last 3 Months or This Year, update the appropriate month
+      setChartData(prev => 
+        prev.map(dataPoint => {
+          if (dataPoint.name === month) {
+            if (transaction.amount > 0) {
+              return {
+                ...dataPoint,
+                income: dataPoint.income + transaction.amount
+              };
+            } else {
+              return {
+                ...dataPoint,
+                expenses: dataPoint.expenses + Math.abs(transaction.amount)
+              };
+            }
+          }
+          return dataPoint;
+        })
+      );
+    }
   };
   
   // Helper function to update budget data
@@ -512,11 +621,14 @@ const FinancialDashboard = () => {
                 >
                   Line
                 </button>
-                <select className="text-sm border rounded-md px-2 py-1 bg-white text-gray-600">
+                <select 
+                  className="text-sm border rounded-md px-2 py-1 bg-white text-gray-600"
+                  value={chartTimePeriod}
+                  onChange={(e) => setChartTimePeriod(e.target.value)}
+                >
                   <option>This Month</option>
                   <option>Last 3 Months</option>
                   <option>This Year</option>
-                  <option>Custom</option>
                 </select>
               </div>
             </div>
@@ -561,7 +673,6 @@ const FinancialDashboard = () => {
                       {transaction.amount > 0 ? <TrendingUp className="h-4 w-4" /> : <CreditCard className="h-4 w-4" />}
                     </div>
                     <div className="ml-3">
-                      <p className="text-sm font-medium text-gray-800">{transaction.payee}</p>
                       <p className="text-xs text-gray-500">{transaction.date} · {transaction.category}</p>
                     </div>
                   </div>
