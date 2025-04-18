@@ -1,5 +1,5 @@
 import React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Bell, User, Plus, CreditCard, ArrowUpDown, Receipt, DollarSign, PieChart, Calendar, Settings, TrendingUp, Home, ChevronDown, FileText } from 'lucide-react';
@@ -92,8 +92,91 @@ const FinancialDashboard = () => {
   const [monthlyExpenses, setMonthlyExpenses] = useState(2845.17);
   const [monthlySavings, setMonthlySavings] = useState(1404.83);
   
+  // Stats for comparisons
+  const [monthlyChange, setMonthlyChange] = useState(2.4);
+  const [incomeChange, setIncomeChange] = useState(1250.00);
+  const [expensesChange, setExpensesChange] = useState(-320.00);
+  
   // Get current month name
   const currentMonth = new Date().toLocaleString('default', { month: 'short' });
+  
+  // Show confetti state
+  const [showConfetti, setShowConfetti] = useState(false);
+  const confettiContainerRef = useRef<HTMLDivElement | null>(null);
+  
+  // Function to create confetti animation
+  const createConfetti = () => {
+    const confettiContainer = confettiContainerRef.current;
+    if (!confettiContainer) return;
+    
+    // Clear any existing confetti
+    confettiContainer.innerHTML = '';
+    
+    const colors = ['#4F46E5', '#10B981', '#F59E0B', '#EC4899', '#8B5CF6'];
+    const particleCount = 150;
+    
+    for (let i = 0; i < particleCount; i++) {
+      const confetti = document.createElement('div');
+      
+      // Set basic styles
+      confetti.style.position = 'absolute';
+      confetti.style.width = `${Math.random() * 10 + 5}px`;
+      confetti.style.height = `${Math.random() * 10 + 5}px`;
+      confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+      confetti.style.opacity = '0.8';
+      confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+      
+      // Set initial position
+      confetti.style.left = `${Math.random() * 100}%`;
+      confetti.style.top = `${Math.random() * 30 - 20}%`;
+      
+      // Add to container
+      confettiContainer.appendChild(confetti);
+      
+      // Animate with random parameters
+      const duration = Math.random() * 3 + 2; // 2-5 seconds
+      const xMovement = (Math.random() - 0.5) * 20; // Random left/right movement
+      
+      confetti.animate(
+        [
+          { 
+            transform: `translate(0, 0) rotate(0deg)`,
+            opacity: 0.8
+          },
+          { 
+            transform: `translate(${xMovement}vw, 100vh) rotate(${Math.random() * 360}deg)`,
+            opacity: 0
+          }
+        ],
+        {
+          duration: duration * 1000,
+          easing: 'cubic-bezier(0.1, 0.8, 0.3, 1)',
+          fill: 'forwards'
+        }
+      );
+      
+      // Remove element after animation completes
+      setTimeout(() => {
+        if (confetti.parentNode === confettiContainer) {
+          confettiContainer.removeChild(confetti);
+        }
+      }, duration * 1000);
+    }
+  };
+  
+  // Effect to trigger confetti animation when state changes
+  useEffect(() => {
+    if (showConfetti) {
+      createConfetti();
+      
+      // Hide confetti state after animation
+      const timer = setTimeout(() => {
+        setShowConfetti(false);
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [showConfetti]);
   
   const getBudgetColor = (percent: number) => {
     if (percent > 90) return 'text-red-500';
@@ -134,13 +217,25 @@ const FinancialDashboard = () => {
     // Update budget data if it's an expense
     if (newTransaction.amount < 0) {
       updateBudgetData(newTransaction);
+    } else {
+      // Check if the transaction is for a savings goal
+      const goalUpdated = updateGoalsData(newTransaction);
+      if (goalUpdated) {
+        setShowConfetti(true);
+      }
     }
   };
   
   // Helper function to update financial metrics
   const updateFinancialMetrics = (transaction: Transaction) => {
     // Update total balance
-    setTotalBalance(prevBalance => prevBalance + transaction.amount);
+    setTotalBalance(prevBalance => {
+      const newBalance = prevBalance + transaction.amount;
+      // Update monthly change percentage based on transaction
+      const changePercent = ((newBalance - prevBalance) / prevBalance) * 100;
+      setMonthlyChange(prev => prev + changePercent);
+      return newBalance;
+    });
     
     // Get current month from transaction date
     const transactionMonth = transaction.date.split(' ')[0]; // e.g., "Apr"
@@ -149,22 +244,28 @@ const FinancialDashboard = () => {
     if (transactionMonth === currentMonth) {
       if (transaction.amount > 0) {
         // Update income
-        setMonthlyIncome(prevIncome => prevIncome + transaction.amount);
+        setMonthlyIncome(prevIncome => {
+          const newIncome = prevIncome + transaction.amount;
+          // Update income change
+          setIncomeChange(prev => prev + transaction.amount);
+          return newIncome;
+        });
       } else {
         // Update expenses (convert negative to positive for display)
-        setMonthlyExpenses(prevExpenses => prevExpenses + Math.abs(transaction.amount));
+        setMonthlyExpenses(prevExpenses => {
+          const newExpenses = prevExpenses + Math.abs(transaction.amount);
+          // Update expenses change
+          setExpensesChange(prev => prev - Math.abs(transaction.amount));
+          return newExpenses;
+        });
       }
       
       // Recalculate savings
-      const newIncome = transaction.amount > 0 ? 
-        monthlyIncome + transaction.amount : 
-        monthlyIncome;
-      
-      const newExpenses = transaction.amount < 0 ? 
-        monthlyExpenses + Math.abs(transaction.amount) : 
-        monthlyExpenses;
-        
-      setMonthlySavings(newIncome - newExpenses);
+      setMonthlySavings(prev => {
+        const newSavings = monthlyIncome + (transaction.amount > 0 ? transaction.amount : 0) - 
+                          (monthlyExpenses + (transaction.amount < 0 ? Math.abs(transaction.amount) : 0));
+        return newSavings;
+      });
     }
   };
   
@@ -220,9 +321,44 @@ const FinancialDashboard = () => {
     
     setBudgetData(updatedBudgetData);
   };
+  
+  // Helper function to update goals data
+  const updateGoalsData = (transaction: Transaction): boolean => {
+    // Check if the transaction category matches any goal name
+    const goalIndex = goalsData.findIndex(goal => 
+      goal.name.toLowerCase() === transaction.category.toLowerCase()
+    );
+    
+    if (goalIndex === -1) return false;
+    
+    // Update the goal
+    const updatedGoalsData = [...goalsData];
+    const goal = updatedGoalsData[goalIndex];
+    
+    const newSaved = goal.saved + transaction.amount;
+    const newPercent = Math.round((newSaved / goal.target) * 100);
+    
+    updatedGoalsData[goalIndex] = {
+      ...goal,
+      saved: newSaved,
+      percent: newPercent
+    };
+    
+    setGoalsData(updatedGoalsData);
+    
+    // Return true if goal is complete or reached a milestone
+    return newPercent >= 100 || (Math.floor(goal.percent / 25) < Math.floor(newPercent / 25));
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Confetti container with ref */}
+      <div 
+        ref={confettiContainerRef}
+        className="fixed inset-0 pointer-events-none z-50" 
+        style={{ display: showConfetti ? 'block' : 'none' }}
+      ></div>
+      
       {/* Navigation Header */}
       <header className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
@@ -315,20 +451,20 @@ const FinancialDashboard = () => {
             <span className="text-sm text-gray-500 mb-1">Total Balance</span>
             <span className="text-3xl font-bold text-gray-800">${totalBalance.toFixed(2)}</span>
             <span className="mt-2 text-sm text-green-500 flex items-center">
-              <TrendingUp className="h-4 w-4 mr-1" /> +2.4% this month
+              <TrendingUp className="h-4 w-4 mr-1" /> +{monthlyChange.toFixed(1)}% this month
             </span>
           </div>
           
           <div className="bg-white rounded-lg shadow p-6 flex flex-col">
             <span className="text-sm text-gray-500 mb-1">Income ({currentMonth})</span>
             <span className="text-2xl font-bold text-gray-800">${monthlyIncome.toFixed(2)}</span>
-            <span className="mt-2 text-sm text-gray-500">+$1,250 from last month</span>
+            <span className="mt-2 text-sm text-gray-500">+${incomeChange.toFixed(2)} from last month</span>
           </div>
           
           <div className="bg-white rounded-lg shadow p-6 flex flex-col">
             <span className="text-sm text-gray-500 mb-1">Expenses ({currentMonth})</span>
             <span className="text-2xl font-bold text-gray-800">${monthlyExpenses.toFixed(2)}</span>
-            <span className="mt-2 text-sm text-green-500">-$320 from last month</span>
+            <span className="mt-2 text-sm text-green-500">${expensesChange.toFixed(2)} from last month</span>
           </div>
           
           <div className="bg-white rounded-lg shadow p-6 flex flex-col">
@@ -458,7 +594,7 @@ const FinancialDashboard = () => {
                   </div>
                   <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                     <div 
-                      className={`h-full rounded-full ${getBudgetColor(item.percent)}`}
+                      className={`h-full rounded-full ${item.percent > 90 ? 'bg-red-500' : item.percent > 75 ? 'bg-yellow-500' : 'bg-green-500'}`}
                       style={{ width: `${item.percent}%` }}
                     ></div>
                   </div>
@@ -541,7 +677,9 @@ const FinancialDashboard = () => {
       <AddTransactionModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        onAddTransaction={handleAddTransaction} 
+        onAddTransaction={handleAddTransaction}
+        budgetData={budgetData}
+        goalsData={goalsData}
       />
     </div>
   );
