@@ -5,6 +5,7 @@ import FinancialDashboard from './FinancialDashboard';
 import BalanceSheet from './accounting/BalanceSheet';
 import TransactionsPage from './TransactionsPage';
 import BudgetPage from './BudgetPage';
+import GoalsPage from './GoalsPage';
 import { DollarSign } from 'lucide-react';
 import { initializeApp } from './initializeApp';
 
@@ -107,6 +108,7 @@ function App() {
           <Route path="/" element={<FinancialDashboard />} />
           <Route path="/transactions" element={<TransactionsPage />} />
           <Route path="/budget" element={<BudgetPage />} />
+          <Route path="/goals" element={<GoalsPage />} />
           <Route path="/accounting/balance-sheet" element={<BalanceSheet />} />
           <Route path="/reports/income-statement" element={<div className={`p-8 text-center ${darkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'}`}>Income Statement (Coming Soon)</div>} />
           <Route path="/reports/cash-flows" element={<div className={`p-8 text-center ${darkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'}`}>Statement of Cash Flows (Coming Soon)</div>} />

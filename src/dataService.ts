@@ -551,3 +551,104 @@ export const updateBudget = async (updatedBudget: BudgetItem): Promise<Financial
       throw error;
     }
   };
+/**
+ * Adds a new savings goal
+ * @param newGoal The goal to add
+ * @returns Updated financial data
+ */
+export const addGoal = async (newGoal: Goal): Promise<FinancialData> => {
+    try {
+      // Load current data
+      const data = await loadData();
+      
+      // Check if a goal with the same name already exists
+      if (data.goals.some(goal => goal.name === newGoal.name)) {
+        throw new Error(`A goal with the name "${newGoal.name}" already exists`);
+      }
+      
+      // Add new goal to the list
+      const updatedData: FinancialData = {
+        ...data,
+        goals: [...data.goals, newGoal]
+      };
+      
+      // Save the updated data
+      await saveData(updatedData);
+      
+      return updatedData;
+    } catch (error) {
+      console.error('Error adding goal:', error);
+      throw error;
+    }
+  };
+  
+  /**
+   * Updates an existing savings goal
+   * @param updatedGoal The goal with updated values
+   * @returns Updated financial data
+   */
+  export const updateGoal = async (updatedGoal: Goal): Promise<FinancialData> => {
+    try {
+      // Load current data
+      const data = await loadData();
+      
+      // Find the goal to update
+      const goalIndex = data.goals.findIndex(goal => goal.name === updatedGoal.name);
+      
+      if (goalIndex === -1) {
+        throw new Error(`Goal "${updatedGoal.name}" not found`);
+      }
+      
+      // Update the goal
+      const updatedGoals = [...data.goals];
+      updatedGoals[goalIndex] = updatedGoal;
+      
+      // Create updated data object
+      const updatedData: FinancialData = {
+        ...data,
+        goals: updatedGoals
+      };
+      
+      // Save the updated data
+      await saveData(updatedData);
+      
+      return updatedData;
+    } catch (error) {
+      console.error('Error updating goal:', error);
+      throw error;
+    }
+  };
+  
+  /**
+   * Deletes a savings goal
+   * @param goalName The name of the goal to delete
+   * @returns Updated financial data
+   */
+  export const deleteGoal = async (goalName: string): Promise<FinancialData> => {
+    try {
+      // Load current data
+      const data = await loadData();
+      
+      // Filter out the goal to delete
+      const updatedGoals = data.goals.filter(goal => goal.name !== goalName);
+      
+      // Check if any goal was removed
+      if (updatedGoals.length === data.goals.length) {
+        throw new Error(`Goal "${goalName}" not found`);
+      }
+      
+      // Create updated data object
+      const updatedData: FinancialData = {
+        ...data,
+        goals: updatedGoals
+      };
+      
+      // Save the updated data
+      await saveData(updatedData);
+      
+      return updatedData;
+    } catch (error) {
+      console.error('Error deleting goal:', error);
+      throw error;
+    }
+  };

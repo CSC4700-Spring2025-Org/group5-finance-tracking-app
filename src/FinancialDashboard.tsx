@@ -353,10 +353,13 @@ const FinancialDashboard = () => {
   <PieChart className="h-5 w-5 mr-1" />
   <span>Budget</span>
 </a>
-            <a href="#" className={`flex items-center ${darkMode ? 'text-gray-300 hover:text-blue-400' : 'text-gray-600 hover:text-blue-600'}`}>
-              <TrendingUp className="h-5 w-5 mr-1" />
-              <span>Goals</span>
-            </a>
+<a 
+  onClick={() => navigate('/goals')} 
+  className={`flex items-center cursor-pointer ${darkMode ? 'text-gray-300 hover:text-blue-400' : 'text-gray-600 hover:text-blue-600'}`}
+>
+  <TrendingUp className="h-5 w-5 mr-1" />
+  <span>Goals</span>
+</a>
             
             {/* Reports Dropdown */}
             <div className="relative">
@@ -686,7 +689,12 @@ const FinancialDashboard = () => {
           <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow p-6`}>
             <div className="flex justify-between items-center mb-4">
               <h2 className={`text-lg font-semibold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>Savings Goals</h2>
-              <a href="#" className={`text-sm ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:underline'}`}>Add Goal</a>
+              <a 
+    onClick={() => navigate('/goals')} 
+    className={`text-sm cursor-pointer ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:underline'}`}
+  >
+    Add Goal
+  </a>
             </div>
             
             <div className="space-y-6">
