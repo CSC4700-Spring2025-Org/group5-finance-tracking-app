@@ -2,10 +2,11 @@ import React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Bell, User, Plus, CreditCard, ArrowUpDown, Receipt, DollarSign, PieChart, Calendar, Settings, TrendingUp, Home, ChevronDown, FileText } from 'lucide-react';
+import { Bell, User, Plus, CreditCard, ArrowUpDown, Receipt, DollarSign, PieChart, Calendar, Settings, TrendingUp, Home, ChevronDown, FileText, RefreshCw } from 'lucide-react';
 import AddTransactionModal from './AddTransactionModal';
 import { Transaction, BudgetItem, Goal, ChartDataPoint, FinancialData, ProfileData } from './types';
 import * as dataService from './dataService';
+import { resetAppData } from './initializeApp';
 
 const FinancialDashboard = () => {
   const navigate = useNavigate();
@@ -20,6 +21,9 @@ const FinancialDashboard = () => {
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [budgetData, setBudgetData] = useState<BudgetItem[]>([]);
   const [goalsData, setGoalsData] = useState<Goal[]>([]);
+
+  // Settings dropdown
+  const [settingsDropdownOpen, setSettingsDropdownOpen] = useState(false);
   
   // Financial metrics state
   const [profile, setProfile] = useState<ProfileData>({
@@ -185,6 +189,11 @@ const FinancialDashboard = () => {
     setReportsDropdownOpen(!reportsDropdownOpen);
   };
 
+  const toggleSettingsDropdown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSettingsDropdownOpen(!settingsDropdownOpen);
+  };
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = () => {
@@ -198,6 +207,68 @@ const FinancialDashboard = () => {
       document.removeEventListener('click', handleClickOutside);
     };
   }, [reportsDropdownOpen]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (settingsDropdownOpen) {
+        setSettingsDropdownOpen(false);
+      }
+    };
+  
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [settingsDropdownOpen]);
+
+  // Handler function for resetting data
+  const handleResetData = async () => {
+    if (window.confirm('Are you sure you want to reset all data to defaults? This action cannot be undone.')) {
+      try {
+        // Show loading indicator
+        setIsLoading(true);
+        
+        // Reset the app data
+        await resetAppData();
+        
+        // Reload data to reflect changes
+        const data = await dataService.loadData();
+        
+        // Update all state with the loaded data
+        setTransactions(data.transactions);
+        setBudgetData(data.budgets);
+        setGoalsData(data.goals);
+        setProfile(data.profile);
+        setInsights(data.insights);
+        
+        // Update chart data based on selected time period
+        if (chartTimePeriod === 'This Month') {
+          setChartData(data.chartData.thisMonth);
+        } else if (chartTimePeriod === 'Last 3 Months') {
+          setChartData(data.chartData.last3Months);
+        } else {
+          setChartData(data.chartData.thisYear);
+        }
+        
+        // Hide loading indicator
+        setIsLoading(false);
+        
+        // Close settings dropdown
+        setSettingsDropdownOpen(false);
+        
+        // Show success message
+        alert('Data has been reset to defaults successfully.');
+      } catch (error) {
+        console.error('Error resetting data:', error);
+        
+        // Hide loading indicator
+        setIsLoading(false);
+        
+        // Show error message
+        alert('Failed to reset data. Please try again.');
+      }
+    }
+  };
 
   // Function to handle adding a new transaction
   const handleAddTransaction = async (newTransaction: Transaction) => {
@@ -324,16 +395,40 @@ const FinancialDashboard = () => {
           </div>
           
           <div className="flex items-center space-x-4">
-            <button className="p-1.5 rounded-full text-gray-600 hover:bg-gray-100">
-              <Bell className="h-5 w-5" />
-            </button>
-            <button className="p-1.5 rounded-full text-gray-600 hover:bg-gray-100">
-              <Settings className="h-5 w-5" />
-            </button>
-            <button className="flex items-center space-x-2 p-1.5 rounded-full text-gray-600 hover:bg-gray-100">
-              <User className="h-5 w-5" />
-            </button>
-          </div>
+  <button className="p-1.5 rounded-full text-gray-600 hover:bg-gray-100">
+    <Bell className="h-5 w-5" />
+  </button>
+  
+  {/* Settings Dropdown */}
+  <div className="relative">
+    <button 
+      className="p-1.5 rounded-full text-gray-600 hover:bg-gray-100"
+      onClick={toggleSettingsDropdown}
+    >
+      <Settings className="h-5 w-5" />
+    </button>
+    
+    {settingsDropdownOpen && (
+      <div 
+        className="absolute top-full right-0 mt-1 bg-white rounded-md shadow-lg py-2 w-48 z-10 border border-gray-200"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button 
+          onClick={handleResetData}
+          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 w-full text-left"
+        >
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Reset Data
+        </button>
+        {/* Additional settings options can be added here */}
+      </div>
+    )}
+  </div>
+  
+  <button className="flex items-center space-x-2 p-1.5 rounded-full text-gray-600 hover:bg-gray-100">
+    <User className="h-5 w-5" />
+  </button>
+</div>
         </div>
       </header>
 
