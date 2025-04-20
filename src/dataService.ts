@@ -462,3 +462,92 @@ export const generateChartData = (period: string): ChartDataPoint[] => {
     return result;
   }
 };
+
+/**
+ * Updates a budget item and saves the changes to storage
+ * @param updatedBudget The budget item with updated values
+ * @returns Updated financial data
+ */
+export const updateBudget = async (updatedBudget: BudgetItem): Promise<FinancialData> => {
+    try {
+      // Load current data
+      const data = await loadData();
+      
+      // Update the specific budget item
+      const updatedBudgets = data.budgets.map(budget => 
+        budget.category === updatedBudget.category ? updatedBudget : budget
+      );
+      
+      // Update data with the new budgets
+      const updatedData: FinancialData = {
+        ...data,
+        budgets: updatedBudgets,
+      };
+      
+      // Save the updated data
+      await saveData(updatedData);
+      
+      return updatedData;
+    } catch (error) {
+      console.error('Error updating budget:', error);
+      throw error;
+    }
+  };
+  
+  /**
+   * Adds a new budget category and corresponding budget item
+   * @param categoryName Name of the new category
+   * @param budgetAmount Monthly budget amount for the category
+   * @returns Updated financial data
+   */
+  export const addBudgetCategory = async (categoryName: string, budgetAmount: number): Promise<FinancialData> => {
+    try {
+      // Load current data
+      const data = await loadData();
+      
+      // Create category ID from name (lowercase, hyphenated)
+      const categoryId = categoryName.toLowerCase().replace(/\s+/g, '-');
+      
+      // Check if category already exists in budgetCategories
+      if (data.categories.budgetCategories.some(cat => cat.id === categoryId || cat.name === categoryName)) {
+        throw new Error(`Category "${categoryName}" already exists`);
+      }
+      
+      // Create new category
+      const newCategory = {
+        id: categoryId,
+        name: categoryName
+      };
+      
+      // Create new budget item
+      const newBudgetItem: BudgetItem = {
+        category: categoryName,
+        budget: budgetAmount,
+        spent: 0,
+        percent: 0
+      };
+      
+      // Add the new category and budget item to data
+      const updatedData: FinancialData = {
+        ...data,
+        categories: {
+          ...data.categories,
+          budgetCategories: [...data.categories.budgetCategories, newCategory],
+          // Also add this category to the mapping
+          categoryMappings: {
+            ...data.categories.categoryMappings,
+            [categoryName]: categoryName
+          }
+        },
+        budgets: [...data.budgets, newBudgetItem]
+      };
+      
+      // Save the updated data
+      await saveData(updatedData);
+      
+      return updatedData;
+    } catch (error) {
+      console.error('Error adding budget category:', error);
+      throw error;
+    }
+  };

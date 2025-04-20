@@ -9,6 +9,7 @@ interface AddTransactionModalProps {
   onAddTransaction: (transaction: Transaction) => void;
   budgetData: BudgetItem[];
   goalsData: Goal[];
+  darkMode?: boolean; // Optional for backward compatibility
 }
 
 const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ 
@@ -16,7 +17,8 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   onClose, 
   onAddTransaction,
   budgetData,
-  goalsData
+  goalsData,
+  darkMode = false // Default to light mode if not provided
 }) => {
   // Categories state
   const [budgetCategories, setBudgetCategories] = useState<TransactionCategory[]>([]);
@@ -230,29 +232,31 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+      <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg w-full max-w-md p-6`}>
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-800">Add Transaction</h2>
+          <h2 className={`text-xl font-semibold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>Add Transaction</h2>
           <button 
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
+            className={`${darkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`}
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {showWarning && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-start">
-            <AlertTriangle className="h-5 w-5 text-red-500 mr-2 mt-0.5" />
+          <div className={`mb-4 p-3 ${darkMode ? 'bg-red-900 border-red-800' : 'bg-red-50 border-red-200'} rounded-md flex items-start border`}>
+            <AlertTriangle className={`h-5 w-5 ${darkMode ? 'text-red-400' : 'text-red-500'} mr-2 mt-0.5`} />
             <div>
-              <p className="text-sm font-medium text-red-800">This transaction will exceed your budget!</p>
-              <p className="text-sm text-red-700 mt-1">
+              <p className={`text-sm font-medium ${darkMode ? 'text-red-300' : 'text-red-800'}`}>This transaction will exceed your budget!</p>
+              <p className={`text-sm ${darkMode ? 'text-red-400' : 'text-red-700'} mt-1`}>
                 Adding ${getCurrentAmount().toFixed(2)} to {selectedBudget?.category} will put you at{' '}
                 {getNewPercentUsed(selectedBudget!)}% of your budget.
               </p>
               <div className="mt-2 flex space-x-2">
                 <button 
-                  className="text-sm bg-white border border-red-300 text-red-700 px-3 py-1 rounded hover:bg-red-50"
+                  className={`text-sm ${darkMode 
+                    ? 'bg-gray-700 border border-red-700 text-red-400 hover:bg-gray-600' 
+                    : 'bg-white border border-red-300 text-red-700 hover:bg-red-50'} px-3 py-1 rounded`}
                   onClick={() => setShowWarning(false)}
                 >
                   Edit Transaction
@@ -271,7 +275,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
         <form onSubmit={handleSubmit}>
           {/* Date */}
           <div className="mb-4">
-            <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="date" className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
               Date
             </label>
             <input
@@ -280,7 +284,9 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
               value={date}
               onChange={(e) => setDate(e.target.value)}
               className={`w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 ${
-                errors.date ? 'border-red-500' : 'border-gray-300'
+                errors.date 
+                  ? 'border-red-500' 
+                  : darkMode ? 'border-gray-600 bg-gray-700 text-gray-200' : 'border-gray-300'
               }`}
             />
             {errors.date && <p className="mt-1 text-xs text-red-500">{errors.date}</p>}
@@ -288,7 +294,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
 
           {/* Transaction Type */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Transaction Type</label>
+            <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Transaction Type</label>
             <div className="flex space-x-4">
               <label className="flex items-center">
                 <input
@@ -300,9 +306,9 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                     setTransactionType('expense');
                     setCategory('');
                   }}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+                  className={`h-4 w-4 ${darkMode ? 'text-blue-400 focus:ring-blue-400' : 'text-blue-600 focus:ring-blue-500'}`}
                 />
-                <span className="ml-2 text-sm text-gray-700">Expense</span>
+                <span className={`ml-2 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Expense</span>
               </label>
               <label className="flex items-center">
                 <input
@@ -314,21 +320,21 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                     setTransactionType('income');
                     setCategory('');
                   }}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+                  className={`h-4 w-4 ${darkMode ? 'text-blue-400 focus:ring-blue-400' : 'text-blue-600 focus:ring-blue-500'}`}
                 />
-                <span className="ml-2 text-sm text-gray-700">Income</span>
+                <span className={`ml-2 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Income</span>
               </label>
             </div>
           </div>
           
           {/* Amount */}
           <div className="mb-4">
-            <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="amount" className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
               Amount
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <span className="text-gray-500 sm:text-sm">$</span>
+                <span className={`${darkMode ? 'text-gray-400' : 'text-gray-500'} sm:text-sm`}>$</span>
               </div>
               <input
                 type="text"
@@ -337,7 +343,9 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 className={`w-full pl-7 pr-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 ${
-                  errors.amount ? 'border-red-500' : 'border-gray-300'
+                  errors.amount 
+                    ? 'border-red-500' 
+                    : darkMode ? 'border-gray-600 bg-gray-700 text-gray-200' : 'border-gray-300'
                 }`}
               />
             </div>
@@ -346,7 +354,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
 
           {/* Payee */}
           <div className="mb-4">
-            <label htmlFor="payee" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="payee" className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
               {transactionType === 'expense' ? 'Payee' : 'Source'}
             </label>
             <input
@@ -356,7 +364,9 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
               value={payee}
               onChange={(e) => setPayee(e.target.value)}
               className={`w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 ${
-                errors.payee ? 'border-red-500' : 'border-gray-300'
+                errors.payee 
+                  ? 'border-red-500' 
+                  : darkMode ? 'border-gray-600 bg-gray-700 text-gray-200' : 'border-gray-300'
               }`}
             />
             {errors.payee && <p className="mt-1 text-xs text-red-500">{errors.payee}</p>}
@@ -364,7 +374,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
 
           {/* Category */}
           <div className="mb-4">
-            <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="category" className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
               Category
             </label>
             <select
@@ -372,7 +382,9 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               className={`w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 ${
-                errors.category ? 'border-red-500' : 'border-gray-300'
+                errors.category 
+                  ? 'border-red-500' 
+                  : darkMode ? 'border-gray-600 bg-gray-700 text-gray-200' : 'border-gray-300'
               }`}
             >
               <option value="">Select category</option>
@@ -442,33 +454,33 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
 
           {/* Budget Progress (for expenses) */}
           {transactionType === 'expense' && selectedBudget && (
-            <div className="mb-4 p-3 bg-gray-50 rounded-md">
+            <div className={`mb-4 p-3 ${darkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-md`}>
               <div className="flex justify-between items-center mb-1">
-                <span className="text-sm font-medium text-gray-800">{selectedBudget.category} Budget</span>
-                <span className="text-sm font-medium">
-                  ${selectedBudget.spent} <span className="text-gray-500">/ ${selectedBudget.budget}</span>
+                <span className={`text-sm font-medium ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{selectedBudget.category} Budget</span>
+                <span className={`text-sm font-medium ${darkMode ? 'text-gray-200' : ''}`}>
+                  ${selectedBudget.spent} <span className={`${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>/ ${selectedBudget.budget}</span>
                 </span>
               </div>
-              <div className="h-2 bg-gray-200 rounded-full overflow-hidden mb-1">
+              <div className={`h-2 ${darkMode ? 'bg-gray-600' : 'bg-gray-200'} rounded-full overflow-hidden mb-1`}>
                 <div 
                   className={`h-full rounded-full ${getBudgetUsageColor(selectedBudget.spent, selectedBudget.budget)}`}
                   style={{ width: `${selectedBudget.percent}%` }}
                 ></div>
               </div>
               <div className="flex justify-between text-xs">
-                <span className={selectedBudget.percent > 90 ? 'text-red-600 font-medium' : 'text-gray-500'}>
+                <span className={selectedBudget.percent > 90 ? 'text-red-600 font-medium' : darkMode ? 'text-gray-400' : 'text-gray-500'}>
                   {selectedBudget.percent}% used
                 </span>
-                <span className="text-gray-500">
+                <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
                   ${getAmountRemaining(selectedBudget).toFixed(2)} remaining
                 </span>
               </div>
               
               {/* Preview of new budget status */}
               {amount && !isNaN(parseFloat(amount)) && (
-                <div className="mt-3 pt-3 border-t border-gray-200">
-                  <p className="text-xs font-medium text-gray-700 mb-1">After this transaction:</p>
-                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden mb-1">
+                <div className={`mt-3 pt-3 border-t ${darkMode ? 'border-gray-600' : 'border-gray-200'}`}>
+                  <p className={`text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>After this transaction:</p>
+                  <div className={`h-2 ${darkMode ? 'bg-gray-600' : 'bg-gray-200'} rounded-full overflow-hidden mb-1`}>
                     <div 
                       className={`h-full rounded-full ${getBudgetUsageColor(
                         selectedBudget.spent + parseFloat(amount), 
@@ -478,10 +490,10 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                     ></div>
                   </div>
                   <div className="flex justify-between text-xs">
-                    <span className={getNewPercentUsed(selectedBudget) > 90 ? 'text-red-600 font-medium' : 'text-gray-500'}>
+                    <span className={getNewPercentUsed(selectedBudget) > 90 ? 'text-red-600 font-medium' : darkMode ? 'text-gray-400' : 'text-gray-500'}>
                       {getNewPercentUsed(selectedBudget)}% used
                     </span>
-                    <span className="text-gray-500">
+                    <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
                       ${(getAmountRemaining(selectedBudget) - parseFloat(amount)).toFixed(2)} remaining
                     </span>
                   </div>
@@ -492,7 +504,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
           
           {/* Goal Progress (for incomes) */}
           {transactionType === 'income' && category && category.startsWith('goal_') && (
-            <div className="mb-4 p-3 bg-gray-50 rounded-md">
+            <div className={`mb-4 p-3 ${darkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-md`}>
               {(() => {
                 const goalId = category.replace('goal_', '');
                 const goal = goalsData[parseInt(goalId)];
@@ -506,41 +518,41 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                 return (
                   <>
                     <div className="flex justify-between items-center mb-1">
-                      <span className="text-sm font-medium text-gray-800">{goal.name} Progress</span>
-                      <span className="text-sm font-medium">
-                        ${goal.saved} <span className="text-gray-500">/ ${goal.target}</span>
+                      <span className={`text-sm font-medium ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{goal.name} Progress</span>
+                      <span className={`text-sm font-medium ${darkMode ? 'text-gray-200' : ''}`}>
+                        ${goal.saved} <span className={`${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>/ ${goal.target}</span>
                       </span>
                     </div>
-                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden mb-1">
+                    <div className={`h-2 ${darkMode ? 'bg-gray-600' : 'bg-gray-200'} rounded-full overflow-hidden mb-1`}>
                       <div 
                         className="h-full rounded-full bg-green-500"
                         style={{ width: `${goal.percent}%` }}
                       ></div>
                     </div>
                     <div className="flex justify-between text-xs">
-                      <span className="text-gray-500">
+                      <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
                         {goal.percent}% saved
                       </span>
-                      <span className="text-gray-500">
+                      <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
                         ${(goal.target - goal.saved).toFixed(2)} to go
                       </span>
                     </div>
                     
                     {/* Preview of new goal status */}
                     {amount && !isNaN(parseFloat(amount)) && (
-                      <div className="mt-3 pt-3 border-t border-gray-200">
-                        <p className="text-xs font-medium text-gray-700 mb-1">After this transaction:</p>
-                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden mb-1">
+                      <div className={`mt-3 pt-3 border-t ${darkMode ? 'border-gray-600' : 'border-gray-200'}`}>
+                        <p className={`text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>After this transaction:</p>
+                        <div className={`h-2 ${darkMode ? 'bg-gray-600' : 'bg-gray-200'} rounded-full overflow-hidden mb-1`}>
                           <div 
                             className="h-full rounded-full bg-green-500"
                             style={{ width: `${Math.min(newPercent, 100)}%` }}
                           ></div>
                         </div>
                         <div className="flex justify-between text-xs">
-                          <span className="text-gray-500">
+                          <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
                             {newPercent}% saved
                           </span>
-                          <span className="text-gray-500">
+                          <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
                             ${(goal.target - newSaved).toFixed(2)} to go
                           </span>
                         </div>
@@ -561,7 +573,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
           {/* Custom Category (shown only when 'Other' is selected) */}
           {(category === 'other_expense' || category === 'other_income') && (
             <div className="mb-4">
-              <label htmlFor="customCategory" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="customCategory" className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                 Specify Category
               </label>
               <input
@@ -571,7 +583,9 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                 value={customCategory}
                 onChange={(e) => setCustomCategory(e.target.value)}
                 className={`w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 ${
-                  errors.customCategory ? 'border-red-500' : 'border-gray-300'
+                  errors.customCategory 
+                    ? 'border-red-500' 
+                    : darkMode ? 'border-gray-600 bg-gray-700 text-gray-200' : 'border-gray-300'
                 }`}
               />
               {errors.customCategory && <p className="mt-1 text-xs text-red-500">{errors.customCategory}</p>}
@@ -586,7 +600,11 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                 resetForm();
                 onClose();
               }}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              className={`px-4 py-2 text-sm font-medium ${
+                darkMode 
+                  ? 'text-gray-300 bg-gray-700 border border-gray-600 hover:bg-gray-600' 
+                  : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+              } rounded-md`}
             >
               Cancel
             </button>
