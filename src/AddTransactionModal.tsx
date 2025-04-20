@@ -1,57 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, AlertTriangle } from 'lucide-react';
-
-interface TransactionCategory {
-  id: string;
-  name: string;
-}
-
-// Predefined categories
-const budgetCategories: TransactionCategory[] = [
-  { id: 'food', name: 'Food & Dining' },
-  { id: 'transport', name: 'Transportation' },
-  { id: 'entertainment', name: 'Entertainment' },
-  { id: 'shopping', name: 'Shopping' }
-];
-
-const expenseCategories: TransactionCategory[] = [
-  { id: 'bills', name: 'Bills' },
-  { id: 'housing', name: 'Housing' },
-  { id: 'health', name: 'Healthcare' },
-  { id: 'other_expense', name: 'Other' }
-];
-
-const incomeCategories: TransactionCategory[] = [
-  { id: 'paycheck', name: 'Paycheck' },
-  { id: 'freelance', name: 'Freelance' },
-  { id: 'investment', name: 'Investment' },
-  { id: 'gift', name: 'Gift' },
-  { id: 'refund', name: 'Refund' },
-  { id: 'other_income', name: 'Other' }
-];
-
-interface Transaction {
-  id: number;
-  date: string;
-  payee: string;
-  category: string;
-  amount: number;
-  customCategory?: string;
-}
-
-interface BudgetItem {
-  category: string;
-  spent: number;
-  budget: number;
-  percent: number;
-}
-
-interface Goal {
-  name: string;
-  saved: number;
-  target: number;
-  percent: number;
-}
+import { Transaction, BudgetItem, Goal, TransactionCategory } from './types';
+import * as dataService from './dataService';
 
 interface AddTransactionModalProps {
   isOpen: boolean;
@@ -68,6 +18,11 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   budgetData,
   goalsData
 }) => {
+  // Categories state
+  const [budgetCategories, setBudgetCategories] = useState<TransactionCategory[]>([]);
+  const [expenseCategories, setExpenseCategories] = useState<TransactionCategory[]>([]);
+  const [incomeCategories, setIncomeCategories] = useState<TransactionCategory[]>([]);
+  
   // Get today's date in YYYY-MM-DD format
   const getTodayFormatted = () => {
     const now = new Date();
@@ -86,6 +41,22 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   const [errors, setErrors] = useState<{[key: string]: string}>({});
   const [showWarning, setShowWarning] = useState<boolean>(false);
   const [selectedBudget, setSelectedBudget] = useState<BudgetItem | null>(null);
+
+  // Load categories when component mounts
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const categories = await dataService.getCategories();
+        setBudgetCategories(categories.budgetCategories);
+        setExpenseCategories(categories.expenseCategories);
+        setIncomeCategories(categories.incomeCategories);
+      } catch (error) {
+        console.error('Error loading categories:', error);
+      }
+    };
+    
+    loadCategories();
+  }, []);
   
   // Reset form when modal opens
   useEffect(() => {
@@ -120,7 +91,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
     } else {
       setSelectedBudget(null);
     }
-  }, [category, transactionType, budgetData]);
+  }, [category, transactionType, budgetData, budgetCategories, expenseCategories]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -418,7 +389,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                       return (
                         <option key={cat.id} value={cat.id}>
                           {cat.name}
-                          {budget && ` ($${remaining?.toFixed(2)} left, ${percentUsed}% used)`}
+                          {budget && ` (${remaining?.toFixed(2)} left, ${percentUsed}% used)`}
                         </option>
                       );
                     })}
@@ -433,7 +404,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                       return (
                         <option key={cat.id} value={cat.id}>
                           {cat.name}
-                          {budget && ` ($${remaining?.toFixed(2)} left, ${percentUsed}% used)`}
+                          {budget && ` (${remaining?.toFixed(2)} left, ${percentUsed}% used)`}
                         </option>
                       );
                     })}

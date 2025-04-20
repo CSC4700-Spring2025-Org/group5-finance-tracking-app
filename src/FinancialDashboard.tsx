@@ -4,138 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Bell, User, Plus, CreditCard, ArrowUpDown, Receipt, DollarSign, PieChart, Calendar, Settings, TrendingUp, Home, ChevronDown, FileText } from 'lucide-react';
 import AddTransactionModal from './AddTransactionModal';
-
-// Define interfaces for type safety
-interface Transaction {
-  id: number;
-  date: string;
-  payee: string;
-  category: string;
-  amount: number;
-  customCategory?: string;
-}
-
-interface BudgetItem {
-  category: string;
-  spent: number;
-  budget: number;
-  percent: number;
-}
-
-interface Goal {
-  name: string;
-  saved: number;
-  target: number;
-  percent: number;
-}
-
-interface ChartDataPoint {
-  name: string;
-  income: number;
-  expenses: number;
-}
-
-// Initial sample data
-const initialTransactionData: Transaction[] = [
-  { id: 1, date: 'Apr 15', payee: 'Grocery Store', category: 'Food', amount: -78.52 },
-  { id: 2, date: 'Apr 14', payee: 'Direct Deposit', category: 'Income', amount: 1250.00 },
-  { id: 3, date: 'Apr 13', payee: 'Coffee Shop', category: 'Dining', amount: -4.75 },
-  { id: 4, date: 'Apr 12', payee: 'Gas Station', category: 'Transport', amount: -45.80 },
-  { id: 5, date: 'Apr 10', payee: 'Utility Bill', category: 'Bills', amount: -120.35 },
-];
-
-// Create historical chart data for different time periods
-const generateChartData = (period: string): ChartDataPoint[] => {
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth();
-  const currentDay = now.getDate();
-  
-  // Format a date to display in the chart
-  const formatDateRange = (startDay: number, endDay: number, month: number, year: number): string => {
-    const startDate = new Date(year, month, startDay);
-    const endDate = new Date(year, month, endDay);
-    const startFormatted = startDate.toLocaleString('default', { month: 'short', day: 'numeric' });
-    const endFormatted = endDate.toLocaleString('default', { month: 'short', day: 'numeric' });
-    return `${startFormatted} - ${endFormatted}`;
-  };
-  
-  // This Month - show weekly date ranges
-  if (period === 'This Month') {
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    const result: ChartDataPoint[] = [];
-    
-    // Create weekly ranges (e.g., "Apr 1 - Apr 7")
-    let startDay = 1;
-    while (startDay <= daysInMonth) {
-      const endDay = Math.min(startDay + 6, daysInMonth);
-      const dateRange = formatDateRange(startDay, endDay, currentMonth, currentYear);
-      
-      // Generate realistic data - higher values for weeks we've already passed
-      const isPastWeek = endDay < currentDay;
-      
-      result.push({
-        name: dateRange,
-        income: isPastWeek ? Math.floor(Math.random() * 1500) + 500 : 0,
-        expenses: isPastWeek ? Math.floor(Math.random() * 1200) + 300 : 0
-      });
-      
-      startDay = endDay + 1;
-    }
-    return result;
-  }
-  
-  // Last 3 Months
-  else if (period === 'Last 3 Months') {
-    const result: ChartDataPoint[] = [];
-    for (let i = 2; i >= 0; i--) {
-      const monthDate = new Date(currentYear, currentMonth - i, 1);
-      const monthName = monthDate.toLocaleString('default', { month: 'short' });
-      result.push({
-        name: monthName,
-        income: Math.floor(Math.random() * 4000) + 2000,
-        expenses: Math.floor(Math.random() * 3500) + 1500
-      });
-    }
-    return result;
-  }
-  
-  // This Year
-  else {
-    const result: ChartDataPoint[] = [];
-    for (let i = 0; i <= currentMonth; i++) {
-      const monthDate = new Date(currentYear, i, 1);
-      const monthName = monthDate.toLocaleString('default', { month: 'short' });
-      result.push({
-        name: monthName,
-        income: Math.floor(Math.random() * 4000) + 2000,
-        expenses: Math.floor(Math.random() * 3500) + 1500
-      });
-    }
-    return result;
-  }
-};
-
-const initialBudgetData: BudgetItem[] = [
-  { category: 'Food & Dining', spent: 450, budget: 600, percent: 75 },
-  { category: 'Transportation', spent: 250, budget: 300, percent: 83 },
-  { category: 'Entertainment', spent: 180, budget: 200, percent: 90 },
-  { category: 'Shopping', spent: 120, budget: 300, percent: 40 },
-];
-
-const initialGoalsData: Goal[] = [
-  { name: 'Vacation', saved: 2500, target: 5000, percent: 50 },
-  { name: 'New Car', saved: 7500, target: 15000, percent: 50 },
-];
-
-// Category mapping for budget updates
-const categoryToBudgetMapping: { [key: string]: string } = {
-  'Food': 'Food & Dining',
-  'Dining': 'Food & Dining',
-  'Transport': 'Transportation',
-  'Entertainment': 'Entertainment',
-  'Shopping': 'Shopping',
-};
+import { Transaction, BudgetItem, Goal, ChartDataPoint, FinancialData, ProfileData } from './types';
+import * as dataService from './dataService';
 
 const FinancialDashboard = () => {
   const navigate = useNavigate();
@@ -143,23 +13,27 @@ const FinancialDashboard = () => {
   const [chartTimePeriod, setChartTimePeriod] = useState('This Month');
   const [reportsDropdownOpen, setReportsDropdownOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   // State for financial data
-  const [transactions, setTransactions] = useState<Transaction[]>(initialTransactionData);
-  const [chartData, setChartData] = useState<ChartDataPoint[]>(generateChartData('This Month'));
-  const [budgetData, setBudgetData] = useState<BudgetItem[]>(initialBudgetData);
-  const [goalsData, setGoalsData] = useState<Goal[]>(initialGoalsData);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
+  const [budgetData, setBudgetData] = useState<BudgetItem[]>([]);
+  const [goalsData, setGoalsData] = useState<Goal[]>([]);
   
   // Financial metrics state
-  const [totalBalance, setTotalBalance] = useState(16420.65);
-  const [monthlyIncome, setMonthlyIncome] = useState(4250.00);
-  const [monthlyExpenses, setMonthlyExpenses] = useState(2845.17);
-  const [monthlySavings, setMonthlySavings] = useState(1404.83);
+  const [profile, setProfile] = useState<ProfileData>({
+    balance: 0,
+    monthlyIncome: 0,
+    monthlyExpenses: 0,
+    monthlySavings: 0,
+    monthlyChange: 0,
+    incomeChange: 0,
+    expensesChange: 0
+  });
   
-  // Stats for comparisons
-  const [monthlyChange, setMonthlyChange] = useState(2.4);
-  const [incomeChange, setIncomeChange] = useState(1250.00);
-  const [expensesChange, setExpensesChange] = useState(-320.00);
+  // Insights state
+  const [insights, setInsights] = useState<any[]>([]);
   
   // Get current month name
   const currentMonth = new Date().toLocaleString('default', { month: 'short' });
@@ -168,9 +42,63 @@ const FinancialDashboard = () => {
   const [showConfetti, setShowConfetti] = useState(false);
   const confettiContainerRef = useRef<HTMLDivElement | null>(null);
   
+  // Load data on component mount
+  useEffect(() => {
+    const loadAllData = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Load all data from the service
+        const data = await dataService.loadData();
+        
+        // Set state with loaded data
+        setTransactions(data.transactions);
+        setBudgetData(data.budgets);
+        setGoalsData(data.goals);
+        setProfile(data.profile);
+        setInsights(data.insights);
+        
+        // Set chart data based on selected time period
+        if (chartTimePeriod === 'This Month') {
+          setChartData(data.chartData.thisMonth);
+        } else if (chartTimePeriod === 'Last 3 Months') {
+          setChartData(data.chartData.last3Months);
+        } else {
+          setChartData(data.chartData.thisYear);
+        }
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error loading data:', error);
+        setIsLoading(false);
+      }
+    };
+    
+    loadAllData();
+  }, []);
+  
   // Update chart data when time period changes
   useEffect(() => {
-    setChartData(generateChartData(chartTimePeriod));
+    const updateChartForPeriod = async () => {
+      try {
+        let periodKey: 'thisMonth' | 'last3Months' | 'thisYear';
+        
+        if (chartTimePeriod === 'This Month') {
+          periodKey = 'thisMonth';
+        } else if (chartTimePeriod === 'Last 3 Months') {
+          periodKey = 'last3Months';
+        } else {
+          periodKey = 'thisYear';
+        }
+        
+        const data = await dataService.getChartData(periodKey);
+        setChartData(data);
+      } catch (error) {
+        console.error('Error updating chart data:', error);
+      }
+    };
+    
+    updateChartForPeriod();
   }, [chartTimePeriod]);
   
   // Function to create confetti animation
@@ -272,192 +200,53 @@ const FinancialDashboard = () => {
   }, [reportsDropdownOpen]);
 
   // Function to handle adding a new transaction
-  const handleAddTransaction = (newTransaction: Transaction) => {
-    // Add the transaction to the list
-    const updatedTransactions = [newTransaction, ...transactions];
-    setTransactions(updatedTransactions);
-    
-    // Update financial metrics
-    updateFinancialMetrics(newTransaction);
-    
-    // Update chart data
-    updateChartData(newTransaction);
-    
-    // Update budget data if it's an expense
-    if (newTransaction.amount < 0) {
-      updateBudgetData(newTransaction);
-    } else {
-      // Check if the transaction is for a savings goal
-      const goalUpdated = updateGoalsData(newTransaction);
+  const handleAddTransaction = async (newTransaction: Transaction) => {
+    try {
+      // Use the data service to add the transaction and get updated data
+      const updatedData = await dataService.addTransaction(newTransaction);
+      
+      // Update all state with the new data
+      setTransactions(updatedData.transactions);
+      setBudgetData(updatedData.budgets);
+      setGoalsData(updatedData.goals);
+      setProfile(updatedData.profile);
+      
+      // Update chart data based on selected time period
+      if (chartTimePeriod === 'This Month') {
+        setChartData(updatedData.chartData.thisMonth);
+      } else if (chartTimePeriod === 'Last 3 Months') {
+        setChartData(updatedData.chartData.last3Months);
+      } else {
+        setChartData(updatedData.chartData.thisYear);
+      }
+      
+      // Check if a goal was completed or reached a milestone
+      const goalUpdated = goalsData.some((oldGoal, idx) => {
+        const newGoal = updatedData.goals[idx];
+        return newGoal && (
+          Math.floor(oldGoal.percent / 25) < Math.floor(newGoal.percent / 25) || 
+          (oldGoal.percent < 100 && newGoal.percent >= 100)
+        );
+      });
+      
       if (goalUpdated) {
         setShowConfetti(true);
       }
+    } catch (error) {
+      console.error('Error adding transaction:', error);
     }
   };
-  
-  // Helper function to update financial metrics
-  const updateFinancialMetrics = (transaction: Transaction) => {
-    // Update total balance
-    setTotalBalance(prevBalance => {
-      const newBalance = prevBalance + transaction.amount;
-      // Update monthly change percentage based on transaction
-      const changePercent = ((newBalance - prevBalance) / prevBalance) * 100;
-      setMonthlyChange(prev => prev + changePercent);
-      return newBalance;
-    });
-    
-    // Get current month from transaction date
-    const transactionMonth = transaction.date.split(' ')[0]; // e.g., "Apr"
-    
-    // Only update monthly income/expenses if transaction is from the current month
-    if (transactionMonth === currentMonth) {
-      if (transaction.amount > 0) {
-        // Update income
-        setMonthlyIncome(prevIncome => {
-          const newIncome = prevIncome + transaction.amount;
-          // Update income change
-          setIncomeChange(prev => prev + transaction.amount);
-          return newIncome;
-        });
-      } else {
-        // Update expenses (convert negative to positive for display)
-        setMonthlyExpenses(prevExpenses => {
-          const newExpenses = prevExpenses + Math.abs(transaction.amount);
-          // Update expenses change
-          setExpensesChange(prev => prev - Math.abs(transaction.amount));
-          return newExpenses;
-        });
-      }
-      
-      // Recalculate savings
-      setMonthlySavings(prev => {
-        const newSavings = monthlyIncome + (transaction.amount > 0 ? transaction.amount : 0) - 
-                          (monthlyExpenses + (transaction.amount < 0 ? Math.abs(transaction.amount) : 0));
-        return newSavings;
-      });
-    }
-  };
-  
-  // Helper function to update chart data
-  const updateChartData = (transaction: Transaction) => {
-    // Extract date parts from transaction
-    const [month, day] = transaction.date.split(' ');
-    const numericDay = parseInt(day);
-    const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().toLocaleString('default', { month: 'short' });
-    
-    // Different update logic based on chart time period
-    if (chartTimePeriod === 'This Month') {
-      // For This Month, find which week range the transaction belongs to
-      if (month === currentMonth) {
-        setChartData(prev => 
-          prev.map(dataPoint => {
-            // Parse the date range (e.g., "Apr 1 - Apr 7")
-            const rangeParts = dataPoint.name.split(' - ');
-            if (rangeParts.length === 2) {
-              const startDateParts = rangeParts[0].split(' ');
-              const endDateParts = rangeParts[1].split(' ');
-              
-              // Extract the day numbers
-              const startDay = parseInt(startDateParts[1]);
-              const endDay = parseInt(endDateParts[1]);
-              
-              // Check if the transaction day falls within this range
-              if (numericDay >= startDay && numericDay <= endDay) {
-                if (transaction.amount > 0) {
-                  return {
-                    ...dataPoint,
-                    income: dataPoint.income + transaction.amount
-                  };
-                } else {
-                  return {
-                    ...dataPoint,
-                    expenses: dataPoint.expenses + Math.abs(transaction.amount)
-                  };
-                }
-              }
-            }
-            return dataPoint;
-          })
-        );
-      }
-    } 
-    else if (chartTimePeriod === 'Last 3 Months' || chartTimePeriod === 'This Year') {
-      // For Last 3 Months or This Year, update the appropriate month
-      setChartData(prev => 
-        prev.map(dataPoint => {
-          if (dataPoint.name === month) {
-            if (transaction.amount > 0) {
-              return {
-                ...dataPoint,
-                income: dataPoint.income + transaction.amount
-              };
-            } else {
-              return {
-                ...dataPoint,
-                expenses: dataPoint.expenses + Math.abs(transaction.amount)
-              };
-            }
-          }
-          return dataPoint;
-        })
-      );
-    }
-  };
-  
-  // Helper function to update budget data
-  const updateBudgetData = (transaction: Transaction) => {
-    // Only proceed if transaction is an expense
-    if (transaction.amount >= 0) return;
-    
-    // Map transaction category to budget category
-    const budgetCategory = categoryToBudgetMapping[transaction.category] || transaction.category;
-    
-    // Find the corresponding budget item
-    const updatedBudgetData = budgetData.map(item => {
-      if (item.category === budgetCategory) {
-        const newSpent = item.spent + Math.abs(transaction.amount);
-        const newPercent = Math.round((newSpent / item.budget) * 100);
-        
-        return {
-          ...item,
-          spent: newSpent,
-          percent: newPercent
-        };
-      }
-      return item;
-    });
-    
-    setBudgetData(updatedBudgetData);
-  };
-  
-  // Helper function to update goals data
-  const updateGoalsData = (transaction: Transaction): boolean => {
-    // Check if the transaction category matches any goal name
-    const goalIndex = goalsData.findIndex(goal => 
-      goal.name.toLowerCase() === transaction.category.toLowerCase()
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <DollarSign className="h-12 w-12 text-blue-600 mx-auto animate-pulse" />
+          <h2 className="mt-4 text-xl font-semibold text-gray-700">Loading your financial data...</h2>
+        </div>
+      </div>
     );
-    
-    if (goalIndex === -1) return false;
-    
-    // Update the goal
-    const updatedGoalsData = [...goalsData];
-    const goal = updatedGoalsData[goalIndex];
-    
-    const newSaved = goal.saved + transaction.amount;
-    const newPercent = Math.round((newSaved / goal.target) * 100);
-    
-    updatedGoalsData[goalIndex] = {
-      ...goal,
-      saved: newSaved,
-      percent: newPercent
-    };
-    
-    setGoalsData(updatedGoalsData);
-    
-    // Return true if goal is complete or reached a milestone
-    return newPercent >= 100 || (Math.floor(goal.percent / 25) < Math.floor(newPercent / 25));
-  };
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -558,28 +347,28 @@ const FinancialDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
           <div className="bg-white rounded-lg shadow p-6 flex flex-col">
             <span className="text-sm text-gray-500 mb-1">Total Balance</span>
-            <span className="text-3xl font-bold text-gray-800">${totalBalance.toFixed(2)}</span>
+            <span className="text-3xl font-bold text-gray-800">${profile.balance.toFixed(2)}</span>
             <span className="mt-2 text-sm text-green-500 flex items-center">
-              <TrendingUp className="h-4 w-4 mr-1" /> +{monthlyChange.toFixed(1)}% this month
+              <TrendingUp className="h-4 w-4 mr-1" /> +{profile.monthlyChange.toFixed(1)}% this month
             </span>
           </div>
           
           <div className="bg-white rounded-lg shadow p-6 flex flex-col">
             <span className="text-sm text-gray-500 mb-1">Income ({currentMonth})</span>
-            <span className="text-2xl font-bold text-gray-800">${monthlyIncome.toFixed(2)}</span>
-            <span className="mt-2 text-sm text-gray-500">+${incomeChange.toFixed(2)} from last month</span>
+            <span className="text-2xl font-bold text-gray-800">${profile.monthlyIncome.toFixed(2)}</span>
+            <span className="mt-2 text-sm text-gray-500">+${profile.incomeChange.toFixed(2)} from last month</span>
           </div>
           
           <div className="bg-white rounded-lg shadow p-6 flex flex-col">
             <span className="text-sm text-gray-500 mb-1">Expenses ({currentMonth})</span>
-            <span className="text-2xl font-bold text-gray-800">${monthlyExpenses.toFixed(2)}</span>
-            <span className="mt-2 text-sm text-green-500">${expensesChange.toFixed(2)} from last month</span>
+            <span className="text-2xl font-bold text-gray-800">${profile.monthlyExpenses.toFixed(2)}</span>
+            <span className="mt-2 text-sm text-green-500">${profile.expensesChange.toFixed(2)} from last month</span>
           </div>
           
           <div className="bg-white rounded-lg shadow p-6 flex flex-col">
             <span className="text-sm text-gray-500 mb-1">Savings</span>
-            <span className="text-2xl font-bold text-gray-800">${monthlySavings.toFixed(2)}</span>
-            <span className="mt-2 text-sm text-green-500">{Math.round((monthlySavings / monthlyIncome) * 100)}% of income</span>
+            <span className="text-2xl font-bold text-gray-800">${profile.monthlySavings.toFixed(2)}</span>
+            <span className="mt-2 text-sm text-green-500">{Math.round((profile.monthlySavings / profile.monthlyIncome) * 100)}% of income</span>
           </div>
         </div>
         
@@ -673,6 +462,7 @@ const FinancialDashboard = () => {
                       {transaction.amount > 0 ? <TrendingUp className="h-4 w-4" /> : <CreditCard className="h-4 w-4" />}
                     </div>
                     <div className="ml-3">
+                      <p className="text-sm">{transaction.payee}</p>
                       <p className="text-xs text-gray-500">{transaction.date} · {transaction.category}</p>
                     </div>
                   </div>
@@ -766,20 +556,37 @@ const FinancialDashboard = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-              <h3 className="text-sm font-medium text-blue-800 mb-2">Spending Pattern</h3>
-              <p className="text-sm text-blue-700">Your restaurant spending has increased by 15% compared to last month.</p>
-            </div>
-            
-            <div className="p-4 bg-green-50 rounded-lg border border-green-100">
-              <h3 className="text-sm font-medium text-green-800 mb-2">Saving Opportunity</h3>
-              <p className="text-sm text-green-700">You could save $85/month by reducing subscription services.</p>
-            </div>
-            
-            <div className="p-4 bg-purple-50 rounded-lg border border-purple-100">
-              <h3 className="text-sm font-medium text-purple-800 mb-2">Upcoming Bills</h3>
-              <p className="text-sm text-purple-700">Your internet bill ($65) is due in 3 days.</p>
-            </div>
+            {insights.map((insight, index) => (
+              <div 
+                key={index} 
+                className={`p-4 rounded-lg border ${
+                  insight.type === 'spending' 
+                    ? 'bg-blue-50 border-blue-100' 
+                    : insight.type === 'saving' 
+                      ? 'bg-green-50 border-green-100' 
+                      : 'bg-purple-50 border-purple-100'
+                }`}
+              >
+                <h3 className={`text-sm font-medium mb-2 ${
+                  insight.type === 'spending' 
+                    ? 'text-blue-800' 
+                    : insight.type === 'saving' 
+                      ? 'text-green-800' 
+                      : 'text-purple-800'
+                }`}>
+                  {insight.title}
+                </h3>
+                <p className={`text-sm ${
+                  insight.type === 'spending' 
+                    ? 'text-blue-700' 
+                    : insight.type === 'saving' 
+                      ? 'text-green-700' 
+                      : 'text-purple-700'
+                }`}>
+                  {insight.message}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </main>

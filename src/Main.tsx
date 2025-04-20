@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import './App.css';
-import { Routes, Route } from 'react-router-dom';
-import FinancialDashboard from './FinancialDashboard';
-import BalanceSheet from './accounting/BalanceSheet';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { DollarSign } from 'lucide-react';
+import FinancialDashboard from './FinancialDashboard';
+// Import other pages as they're developed
+// import IncomeStatement from './pages/IncomeStatement';
+// import BalanceSheet from './pages/BalanceSheet';
+// import CashFlowStatement from './pages/CashFlowStatement';
+
 import { initializeApp } from './initializeApp';
 
-function App() {
+const Main: React.FC = () => {
   const [isInitializing, setIsInitializing] = useState(true);
   const [initError, setInitError] = useState<string | null>(null);
 
@@ -59,15 +62,19 @@ function App() {
   }
 
   return (
-    <div className="App">
+    <Router>
       <Routes>
         <Route path="/" element={<FinancialDashboard />} />
-        <Route path="/accounting/balance-sheet" element={<BalanceSheet />} />
-        <Route path="/reports/income-statement" element={<div className="p-8 text-center">Income Statement (Coming Soon)</div>} />
-        <Route path="/reports/cash-flows" element={<div className="p-8 text-center">Statement of Cash Flows (Coming Soon)</div>} />
+        {/* Add routes for other pages as they're developed */}
+        {/* <Route path="/reports/income-statement" element={<IncomeStatement />} /> */}
+        {/* <Route path="/accounting/balance-sheet" element={<BalanceSheet />} /> */}
+        {/* <Route path="/reports/cash-flows" element={<CashFlowStatement />} /> */}
+        
+        {/* Redirect any other paths to the dashboard */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </div>
+    </Router>
   );
-}
+};
 
-export default App;
+export default Main;
