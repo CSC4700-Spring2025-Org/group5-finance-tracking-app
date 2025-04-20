@@ -4,6 +4,7 @@ import { DarkModeContext } from './App';
 import * as dataService from './dataService';
 import { Transaction } from './types';
 import { useNavigate } from 'react-router-dom';
+import Header from './Header';
 
 const TransactionsPage = () => {
   const navigate = useNavigate();
@@ -172,19 +173,7 @@ const TransactionsPage = () => {
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
       {/* Header */}
-      <header className={`${darkMode ? 'bg-gray-800 shadow-md' : 'bg-white shadow-sm'} border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center">
-            <button 
-              onClick={() => navigate('/')} 
-              className={`p-2 rounded-full ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} mr-4`}
-            >
-              <ArrowLeft className={`h-5 w-5 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`} />
-            </button>
-            <h1 className={`text-xl font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>Transactions</h1>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       <main className="container mx-auto px-4 py-6">
         {/* Filters and Search */}

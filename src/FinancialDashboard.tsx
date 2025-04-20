@@ -8,12 +8,12 @@ import { Transaction, BudgetItem, Goal, ChartDataPoint, FinancialData, ProfileDa
 import * as dataService from './dataService';
 import { resetAppData } from './initializeApp';
 import { DarkModeContext } from './App';
+import Header from './Header';
 
 const FinancialDashboard = () => {
   const navigate = useNavigate();
   const [chartType, setChartType] = useState('bar');
   const [chartTimePeriod, setChartTimePeriod] = useState('This Month');
-  const [reportsDropdownOpen, setReportsDropdownOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { darkMode, toggleDarkMode } = React.useContext(DarkModeContext);
@@ -23,9 +23,6 @@ const FinancialDashboard = () => {
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [budgetData, setBudgetData] = useState<BudgetItem[]>([]);
   const [goalsData, setGoalsData] = useState<Goal[]>([]);
-
-  // Settings dropdown
-  const [settingsDropdownOpen, setSettingsDropdownOpen] = useState(false);
   
   // Financial metrics state
   const [profile, setProfile] = useState<ProfileData>({
@@ -187,43 +184,6 @@ const FinancialDashboard = () => {
     return 'text-green-500';
   };
 
-  const toggleReportsDropdown = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setReportsDropdownOpen(!reportsDropdownOpen);
-  };
-
-  const toggleSettingsDropdown = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setSettingsDropdownOpen(!settingsDropdownOpen);
-  };
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = () => {
-      if (reportsDropdownOpen) {
-        setReportsDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener('click', handleClickOutside);
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-    };
-  }, [reportsDropdownOpen]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (settingsDropdownOpen) {
-        setSettingsDropdownOpen(false);
-      }
-    };
-  
-    document.addEventListener('click', handleClickOutside);
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-    };
-  }, [settingsDropdownOpen]);
-
   // Handler function for resetting data
   const handleResetData = async () => {
     if (window.confirm('Are you sure you want to reset all data to defaults? This action cannot be undone.')) {
@@ -255,9 +215,6 @@ const FinancialDashboard = () => {
         
         // Hide loading indicator
         setIsLoading(false);
-        
-        // Close settings dropdown
-        setSettingsDropdownOpen(false);
         
         // Show success message
         alert('Data has been reset to defaults successfully.');
@@ -327,157 +284,7 @@ const FinancialDashboard = () => {
       ></div>
       
       {/* Navigation Header */}
-      <header className={`${darkMode ? 'bg-gray-800 shadow-md' : 'bg-white shadow-sm'}`}>
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center space-x-1">
-            <DollarSign className={`h-6 w-6 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
-            <span className={`text-xl font-semibold ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>FinTrack</span>
-          </div>
-          
-          <div className="hidden md:flex space-x-6">
-            <a href="#" className={`flex items-center ${darkMode ? 'text-blue-400 font-medium' : 'text-blue-600 font-medium'}`}>
-              <Home className="h-5 w-5 mr-1" />
-              <span>Dashboard</span>
-            </a>
-            <a 
-  onClick={() => navigate('/transactions')} 
-  className={`flex items-center cursor-pointer ${darkMode ? 'text-gray-300 hover:text-blue-400' : 'text-gray-600 hover:text-blue-600'}`}
->
-  <CreditCard className="h-5 w-5 mr-1" />
-  <span>Transactions</span>
-</a>
-<a 
-  onClick={() => navigate('/budget')} 
-  className={`flex items-center cursor-pointer ${darkMode ? 'text-gray-300 hover:text-blue-400' : 'text-gray-600 hover:text-blue-600'}`}
->
-  <PieChart className="h-5 w-5 mr-1" />
-  <span>Budget</span>
-</a>
-<a 
-  onClick={() => navigate('/goals')} 
-  className={`flex items-center cursor-pointer ${darkMode ? 'text-gray-300 hover:text-blue-400' : 'text-gray-600 hover:text-blue-600'}`}
->
-  <TrendingUp className="h-5 w-5 mr-1" />
-  <span>Goals</span>
-</a>
-            
-            {/* Reports Dropdown */}
-            <div className="relative">
-            <button 
-  onClick={(e) => toggleReportsDropdown(e)}
-  className={`flex items-center ${
-    darkMode 
-      ? 'text-gray-300 hover:text-blue-400' 
-      : 'text-gray-600 hover:text-blue-600'
-  }`}
->
-  <Calendar className="h-5 w-5 mr-1" />
-  <span>Reports</span>
-  <ChevronDown className={`h-4 w-4 ml-1 transition-transform ${reportsDropdownOpen ? 'rotate-180' : ''}`} />
-</button>
-  
-{reportsDropdownOpen && (
-  <div 
-    className={`absolute top-full left-0 mt-1 ${
-      darkMode 
-        ? 'bg-gray-800 border-gray-700' 
-        : 'bg-white border-gray-200'
-    } rounded-md shadow-lg py-2 w-64 z-10 border`}
-    onClick={(e) => e.stopPropagation()}
-  >
-    <button 
-      onClick={() => navigate('/reports/income-statement')}
-      className={`flex items-center px-4 py-2 text-sm ${
-        darkMode 
-          ? 'text-gray-300 hover:bg-gray-700 hover:text-blue-400' 
-          : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
-      } w-full text-left`}
-    >
-      <FileText className="h-4 w-4 mr-2" />
-      Income Statement
-    </button>
-    <button 
-      onClick={() => navigate('/accounting/balance-sheet')}
-      className={`flex items-center px-4 py-2 text-sm ${
-        darkMode 
-          ? 'text-gray-300 hover:bg-gray-700 hover:text-blue-400' 
-          : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
-      } w-full text-left`}
-    >
-      <FileText className="h-4 w-4 mr-2" />
-      Balance Sheet
-    </button>
-    <button 
-      onClick={() => navigate('/reports/cash-flows')}
-      className={`flex items-center px-4 py-2 text-sm ${
-        darkMode 
-          ? 'text-gray-300 hover:bg-gray-700 hover:text-blue-400' 
-          : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
-      } w-full text-left`}
-    >
-      <FileText className="h-4 w-4 mr-2" />
-      Statement of Cash Flows
-    </button>
-  </div>
-)}
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <button className={`p-1.5 rounded-full ${darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100'}`}>
-              <Bell className="h-5 w-5" />
-            </button>
-            
-            {/* Settings Dropdown */}
-            <div className="relative">
-              <button 
-                className={`p-1.5 rounded-full ${darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100'}`}
-                onClick={toggleSettingsDropdown}
-              >
-                <Settings className="h-5 w-5" />
-              </button>
-              
-              {settingsDropdownOpen && (
-                <div 
-                  className={`absolute top-full right-0 mt-1 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-md shadow-lg py-2 w-48 z-10 border`}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {/* Dark Mode Toggle */}
-                  <button 
-                    onClick={toggleDarkMode}
-                    className={`flex items-center px-4 py-2 text-sm ${darkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-blue-400' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'} w-full text-left`}
-                  >
-                    {darkMode ? (
-                      <>
-                        <Sun className="h-4 w-4 mr-2" />
-                        Light Mode
-                      </>
-                    ) : (
-                      <>
-                        <Moon className="h-4 w-4 mr-2" />
-                        Dark Mode
-                      </>
-                    )}
-                  </button>
-                  
-                  {/* Reset Data Option */}
-                  <button 
-                    onClick={handleResetData}
-                    className={`flex items-center px-4 py-2 text-sm ${darkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-blue-400' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'} w-full text-left`}
-                  >
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Reset Data
-                  </button>
-                </div>
-              )}
-            </div>
-            
-            <button className={`flex items-center space-x-2 p-1.5 rounded-full ${darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100'}`}>
-              <User className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-      </header>
+      <Header />
   
       <main className="container mx-auto px-4 py-6">
         {/* Financial Overview */}

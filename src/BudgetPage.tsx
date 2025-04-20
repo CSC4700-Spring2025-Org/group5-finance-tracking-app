@@ -7,6 +7,7 @@ import {
 import { BudgetItem, Transaction, CategoriesData } from './types';
 import * as dataService from './dataService';
 import { DarkModeContext } from './App';
+import Header from './Header';
 
 const BudgetPage = () => {
   const navigate = useNavigate();
@@ -147,43 +148,7 @@ const BudgetPage = () => {
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
       {/* Navigation Header */}
-      <header className={`${darkMode ? 'bg-gray-800 shadow-md' : 'bg-white shadow-sm'}`}>
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center space-x-1">
-            <DollarSign className={`h-6 w-6 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
-            <span className={`text-xl font-semibold ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>FinTrack</span>
-          </div>
-          
-          <div className="hidden md:flex space-x-6">
-            <a 
-              onClick={() => navigate('/')} 
-              className={`flex items-center cursor-pointer ${darkMode ? 'text-gray-300 hover:text-blue-400' : 'text-gray-600 hover:text-blue-600'}`}
-            >
-              <Home className="h-5 w-5 mr-1" />
-              <span>Dashboard</span>
-            </a>
-            <a 
-              onClick={() => navigate('/transactions')} 
-              className={`flex items-center cursor-pointer ${darkMode ? 'text-gray-300 hover:text-blue-400' : 'text-gray-600 hover:text-blue-600'}`}
-            >
-              <CreditCard className="h-5 w-5 mr-1" />
-              <span>Transactions</span>
-            </a>
-            <a 
-              className={`flex items-center cursor-pointer ${darkMode ? 'text-blue-400 font-medium' : 'text-blue-600 font-medium'}`}
-            >
-              <PieChart className="h-5 w-5 mr-1" />
-              <span>Budget</span>
-            </a>
-            <a 
-              className={`flex items-center cursor-pointer ${darkMode ? 'text-gray-300 hover:text-blue-400' : 'text-gray-600 hover:text-blue-600'}`}
-            >
-              <TrendingUp className="h-5 w-5 mr-1" />
-              <span>Goals</span>
-            </a>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       <main className="container mx-auto px-4 py-6">
         {/* Page header with back button */}
