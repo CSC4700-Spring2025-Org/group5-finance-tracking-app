@@ -220,16 +220,11 @@ const FinancialDashboard = () => {
         setChartData(updatedData.chartData.thisYear);
       }
       
-      // Check if a goal was completed or reached a milestone
-      const goalUpdated = goalsData.some((oldGoal, idx) => {
-        const newGoal = updatedData.goals[idx];
-        return newGoal && (
-          Math.floor(oldGoal.percent / 25) < Math.floor(newGoal.percent / 25) || 
-          (oldGoal.percent < 100 && newGoal.percent >= 100)
-        );
-      });
+      // Check if transaction contributes to any savings goal
+      const isGoalContribution = newTransaction.amount > 0 && 
+        updatedData.goals.some(goal => goal.name === newTransaction.category);
       
-      if (goalUpdated) {
+      if (isGoalContribution) {
         setShowConfetti(true);
       }
     } catch (error) {
@@ -356,7 +351,7 @@ const FinancialDashboard = () => {
           <div className="bg-white rounded-lg shadow p-6 flex flex-col">
             <span className="text-sm text-gray-500 mb-1">Income ({currentMonth})</span>
             <span className="text-2xl font-bold text-gray-800">${profile.monthlyIncome.toFixed(2)}</span>
-            <span className="mt-2 text-sm text-gray-500">+${profile.incomeChange.toFixed(2)} from last month</span>
+            <span className="mt-2 text-sm text-green-500">+${profile.incomeChange.toFixed(2)} from last month</span>
           </div>
           
           <div className="bg-white rounded-lg shadow p-6 flex flex-col">
