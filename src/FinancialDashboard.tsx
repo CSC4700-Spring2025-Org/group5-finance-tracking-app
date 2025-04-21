@@ -17,6 +17,7 @@ const FinancialDashboard = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { darkMode, toggleDarkMode } = React.useContext(DarkModeContext);
+  const [insightsLoading, setInsightsLoading] = useState(false);
   
   // State for financial data
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -59,7 +60,10 @@ const FinancialDashboard = () => {
         setBudgetData(data.budgets);
         setGoalsData(data.goals);
         setProfile(data.profile);
-        setInsights(data.insights);
+        
+        // Get insights with potential refresh from API
+        const loadedInsights = await dataService.getInsights(false); // false means don't force refresh
+        setInsights(loadedInsights);
         
         // Set chart data based on selected time period
         if (chartTimePeriod === 'This Month') {
@@ -103,6 +107,19 @@ const FinancialDashboard = () => {
     
     updateChartForPeriod();
   }, [chartTimePeriod]);
+
+  // Add a function to handle refreshing insights:
+  const handleRefreshInsights = async () => {
+    setInsightsLoading(true);
+    try {
+      const updatedData = await dataService.refreshInsights();
+      setInsights(updatedData.insights);
+    } catch (error) {
+      console.error('Error refreshing insights:', error);
+    } finally {
+      setInsightsLoading(false);
+    }
+  };
   
   // Function to create confetti animation
   const createConfetti = () => {
@@ -544,44 +561,53 @@ const FinancialDashboard = () => {
         
         {/* Financial Insights */}
         <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow p-6`}>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className={`text-lg font-semibold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>Financial Insights</h2>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {insights.map((insight, index) => (
-              <div 
-                key={index} 
-                className={`p-4 rounded-lg border ${
-                  insight.type === 'spending' 
-                    ? darkMode ? 'bg-blue-900 border-blue-800' : 'bg-blue-50 border-blue-100' 
-                    : insight.type === 'saving' 
-                      ? darkMode ? 'bg-green-900 border-green-800' : 'bg-green-50 border-green-100' 
-                      : darkMode ? 'bg-purple-900 border-purple-800' : 'bg-purple-50 border-purple-100'
-                }`}
-              >
-                <h3 className={`text-sm font-medium mb-2 ${
-                  insight.type === 'spending' 
-                    ? darkMode ? 'text-blue-300' : 'text-blue-800' 
-                    : insight.type === 'saving' 
-                      ? darkMode ? 'text-green-300' : 'text-green-800' 
-                      : darkMode ? 'text-purple-300' : 'text-purple-800'
-                }`}>
-                  {insight.title}
-                </h3>
-                <p className={`text-sm ${
-                  insight.type === 'spending' 
-                    ? darkMode ? 'text-blue-200' : 'text-blue-700' 
-                    : insight.type === 'saving' 
-                      ? darkMode ? 'text-green-200' : 'text-green-700' 
-                      : darkMode ? 'text-purple-200' : 'text-purple-700'
-                }`}>
-                  {insight.message}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
+  <div className="flex justify-between items-center mb-4">
+    <h2 className={`text-lg font-semibold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>Financial Insights</h2>
+    <button 
+      onClick={handleRefreshInsights} 
+      disabled={insightsLoading}
+      className={`flex items-center rounded-md ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'} px-3 py-1 text-sm transition-colors`}
+    >
+      <RefreshCw className={`h-3 w-3 mr-1 ${insightsLoading ? 'animate-spin' : ''}`} />
+      {insightsLoading ? 'Refreshing...' : 'Refresh Insights'}
+    </button>
+  </div>
+  
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    {insights.map((insight, index) => (
+      <div 
+        key={index} 
+        className={`p-4 rounded-lg border ${
+          insight.type === 'spending' 
+            ? darkMode ? 'bg-blue-900 border-blue-800' : 'bg-blue-50 border-blue-100' 
+            : insight.type === 'saving' 
+              ? darkMode ? 'bg-green-900 border-green-800' : 'bg-green-50 border-green-100' 
+              : darkMode ? 'bg-purple-900 border-purple-800' : 'bg-purple-50 border-purple-100'
+        }`}
+      >
+        <h3 className={`text-sm font-medium mb-2 ${
+          insight.type === 'spending' 
+            ? darkMode ? 'text-blue-300' : 'text-blue-800' 
+            : insight.type === 'saving' 
+              ? darkMode ? 'text-green-300' : 'text-green-800' 
+              : darkMode ? 'text-purple-300' : 'text-purple-800'
+        }`}>
+          {insight.title}
+        </h3>
+        <p className={`text-sm ${
+          insight.type === 'spending' 
+            ? darkMode ? 'text-blue-200' : 'text-blue-700' 
+            : insight.type === 'saving' 
+              ? darkMode ? 'text-green-200' : 'text-green-700' 
+              : darkMode ? 'text-purple-200' : 'text-purple-700'
+        }`}>
+          {insightsLoading && index === 0 ? 'Analyzing your financial data...' : insight.message}
+        </p>
+      </div>
+    ))}
+  </div>
+</div>
+
       </main>
   
       {/* Add Transaction Modal - Modified to support dark mode */}

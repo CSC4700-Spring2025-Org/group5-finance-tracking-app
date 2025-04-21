@@ -1,5 +1,6 @@
 import { Transaction, BudgetItem, Goal, ChartDataPoint, FinancialData, ProfileData, CategoriesData, InsightData } from './types';
 import * as fileService from './fileService';
+import { insightsService } from './insightsService';
 
 // Default data for initializing the application
 const defaultData: FinancialData = {
@@ -238,12 +239,60 @@ export const getChartData = async (period: 'thisMonth' | 'last3Months' | 'thisYe
   return data.chartData[period];
 };
 
+// Constants for insights caching
+const INSIGHTS_CACHE_KEY = 'insightsCacheTimestamp';
+const INSIGHTS_CACHE_DURATION = 3600000; // 1 hour in milliseconds
 /**
- * Gets all insights
+ * Gets all insights, potentially refreshing from the API if they're outdated
  */
-export const getInsights = async (): Promise<InsightData[]> => {
-  const data = await loadData();
-  return data.insights;
+export const getInsights = async (forceRefresh = false): Promise<InsightData[]> => {
+  try {
+    const data = await loadData();
+    
+    // Check if we should refresh the insights
+    const shouldRefresh = forceRefresh || shouldRefreshInsights();
+    
+    if (shouldRefresh) {
+      // Generate new insights
+      try {
+        const newInsights = await insightsService.generateInsights(data);
+        
+        // Update the insights in the data
+        data.insights = newInsights;
+        
+        // Save the updated data
+        await saveData(data);
+        
+        // Update the cache timestamp
+        localStorage.setItem(INSIGHTS_CACHE_KEY, Date.now().toString());
+      } catch (error) {
+        console.error('Failed to refresh insights:', error);
+        // Continue with existing insights
+      }
+    }
+    
+    return data.insights;
+  } catch (error) {
+    console.error('Error getting insights:', error);
+    throw error;
+  }
+};
+
+/**
+ * Checks if insights should be refreshed based on cache timestamp
+ */
+const shouldRefreshInsights = (): boolean => {
+  const cacheTimestampStr = localStorage.getItem(INSIGHTS_CACHE_KEY);
+  
+  if (!cacheTimestampStr) {
+    return true; // No cache timestamp, should refresh
+  }
+  
+  const cacheTimestamp = parseInt(cacheTimestampStr, 10);
+  const currentTime = Date.now();
+  
+  // Check if cache has expired
+  return currentTime - cacheTimestamp > INSIGHTS_CACHE_DURATION;
 };
 
 /**
@@ -652,3 +701,30 @@ export const addGoal = async (newGoal: Goal): Promise<FinancialData> => {
       throw error;
     }
   };
+/**
+ * Refreshes insights using the OpenAI API
+ * @returns Updated financial data with new insights
+ */
+export const refreshInsights = async (): Promise<FinancialData> => {
+  try {
+    // Load current data
+    const data = await loadData();
+    
+    // Generate new insights
+    const newInsights = await insightsService.generateInsights(data);
+    
+    // Update the insights in the data
+    const updatedData: FinancialData = {
+      ...data,
+      insights: newInsights
+    };
+    
+    // Save the updated data
+    await saveData(updatedData);
+    
+    return updatedData;
+  } catch (error) {
+    console.error('Error refreshing insights:', error);
+    throw error;
+  }
+};
