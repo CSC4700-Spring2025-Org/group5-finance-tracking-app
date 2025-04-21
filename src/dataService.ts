@@ -1,6 +1,26 @@
 import { Transaction, BudgetItem, Goal, ChartDataPoint, FinancialData, ProfileData, CategoriesData, InsightData } from './types';
 import * as fileService from './fileService';
 import { insightsService } from './insightsService';
+import {
+  getBalanceSheet,
+  addBalanceSheetItem,
+  deleteBalanceSheetItem,
+  getIncomeStatement,
+  addIncomeStatementItem,
+  deleteIncomeStatementItem,
+  getCashFlowStatement,
+  addCashFlowItem,
+  deleteCashFlowItem,
+  BalanceSheetData,
+  IncomeStatementData,
+  CashFlowStatementData,
+  AssetItem,
+  LiabilityItem,
+  BalanceSheetItem,
+  RevenueItem,
+  ExpenseItem,
+  CashFlowItem
+} from './financialStatementsService';
 
 // Default data for initializing the application
 const defaultData: FinancialData = {
@@ -727,4 +747,15 @@ export const refreshInsights = async (): Promise<FinancialData> => {
     console.error('Error refreshing insights:', error);
     throw error;
   }
+};
+export {
+  getBalanceSheet,
+  addBalanceSheetItem,
+  deleteBalanceSheetItem,
+  getIncomeStatement,
+  addIncomeStatementItem,
+  deleteIncomeStatementItem,
+  getCashFlowStatement,
+  addCashFlowItem,
+  deleteCashFlowItem
 };

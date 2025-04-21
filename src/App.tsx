@@ -8,6 +8,8 @@ import BudgetPage from './BudgetPage';
 import GoalsPage from './GoalsPage';
 import { DollarSign } from 'lucide-react';
 import { initializeApp } from './initializeApp';
+import IncomeStatement from './accounting/IncomeStatement';
+import CashFlowStatement from './accounting/CashFlowStatement';
 
 // Create a context for dark mode that can be used throughout the app
 export const DarkModeContext = React.createContext({
@@ -110,8 +112,8 @@ function App() {
           <Route path="/budget" element={<BudgetPage />} />
           <Route path="/goals" element={<GoalsPage />} />
           <Route path="/accounting/balance-sheet" element={<BalanceSheet />} />
-          <Route path="/reports/income-statement" element={<div className={`p-8 text-center ${darkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'}`}>Income Statement (Coming Soon)</div>} />
-          <Route path="/reports/cash-flows" element={<div className={`p-8 text-center ${darkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'}`}>Statement of Cash Flows (Coming Soon)</div>} />
+<Route path="/reports/income-statement" element={<IncomeStatement />} />
+<Route path="/reports/cash-flows" element={<CashFlowStatement />} />
         </Routes>
       </div>
     </DarkModeContext.Provider>
