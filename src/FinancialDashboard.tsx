@@ -9,6 +9,58 @@ import * as dataService from './dataService';
 import { resetAppData } from './initializeApp';
 import { DarkModeContext } from './App';
 import Header from './Header';
+import PayBillModal from './PayBillModal';
+import TransferMoneyModal from './TransferMoneyModal';
+import ScanReceiptModal from './ScanReceiptModal';
+
+// Custom tooltip component for charts
+const CustomChartTooltip = (props: any) => {
+  const { active, payload, label, darkMode } = props;
+  
+  if (!active || !payload || !payload.length) {
+    return null;
+  }
+  
+  return (
+    <div 
+      className={`custom-tooltip ${darkMode ? 'dark-mode-tooltip' : ''}`}
+      style={{
+        backgroundColor: darkMode ? '#1F2937' : '#FFFFFF',
+        border: `1px solid ${darkMode ? '#374151' : '#E5E7EB'}`,
+        padding: '10px',
+        borderRadius: '4px',
+        boxShadow: '0 2px 5px rgba(0, 0, 0, 0.15)',
+        color: darkMode ? '#F9FAFB' : '#111827'
+      }}
+    >
+      <p className="label" style={{ 
+        marginBottom: '5px',
+        fontWeight: 500,
+        fontSize: '14px',
+        color: darkMode ? '#F9FAFB' : '#111827'
+      }}>{label}</p>
+      {payload.map((entry: any, index: any) => (
+        <div key={index} style={{ 
+          display: 'flex', 
+          alignItems: 'center',
+          fontSize: '12px',
+          marginTop: '2px'
+        }}>
+          <div style={{ 
+            width: '8px', 
+            height: '8px', 
+            backgroundColor: entry.color,
+            marginRight: '5px',
+            borderRadius: '50%'
+          }} />
+          <span style={{ color: darkMode ? '#F9FAFB' : '#111827' }}>
+            {entry.name}: ${entry.value.toFixed(2)}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 const FinancialDashboard = () => {
   const navigate = useNavigate();
@@ -18,6 +70,9 @@ const FinancialDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { darkMode, toggleDarkMode } = React.useContext(DarkModeContext);
   const [insightsLoading, setInsightsLoading] = useState(false);
+  const [isPayBillModalOpen, setIsPayBillModalOpen] = useState(false);
+  const [isTransferMoneyModalOpen, setIsTransferMoneyModalOpen] = useState(false);
+  const [isScanReceiptModalOpen, setIsScanReceiptModalOpen] = useState(false);
   
   // State for financial data
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -335,21 +390,30 @@ const FinancialDashboard = () => {
         
         {/* Quick Actions */}
         <div className="flex flex-wrap gap-4 mb-6">
-          <button 
-            className="flex items-center rounded-md bg-blue-600 text-white px-4 py-2 text-sm font-medium"
-            onClick={() => setIsModalOpen(true)}
-          >
-            <Plus className="h-4 w-4 mr-2" /> Add Transaction
-          </button>
-          <button className={`flex items-center rounded-md ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-200' : 'bg-white border-gray-300 text-gray-700'} border px-4 py-2 text-sm font-medium`}>
-            <CreditCard className="h-4 w-4 mr-2" /> Pay Bill
-          </button>
-          <button className={`flex items-center rounded-md ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-200' : 'bg-white border-gray-300 text-gray-700'} border px-4 py-2 text-sm font-medium`}>
-            <ArrowUpDown className="h-4 w-4 mr-2" /> Transfer Money
-          </button>
-          <button className={`flex items-center rounded-md ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-200' : 'bg-white border-gray-300 text-gray-700'} border px-4 py-2 text-sm font-medium`}>
-            <Receipt className="h-4 w-4 mr-2" /> Scan Receipt
-          </button>
+        <button 
+  className="flex items-center rounded-md bg-blue-600 text-white px-4 py-2 text-sm font-medium"
+  onClick={() => setIsModalOpen(true)}
+>
+  <Plus className="h-4 w-4 mr-2" /> Add Transaction
+</button>
+<button 
+  className={`flex items-center rounded-md ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-200' : 'bg-white border-gray-300 text-gray-700'} border px-4 py-2 text-sm font-medium`}
+  onClick={() => setIsPayBillModalOpen(true)}
+>
+  <CreditCard className="h-4 w-4 mr-2" /> Pay Bill
+</button>
+<button 
+  className={`flex items-center rounded-md ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-200' : 'bg-white border-gray-300 text-gray-700'} border px-4 py-2 text-sm font-medium`}
+  onClick={() => setIsTransferMoneyModalOpen(true)}
+>
+  <ArrowUpDown className="h-4 w-4 mr-2" /> Transfer Money
+</button>
+<button 
+  className={`flex items-center rounded-md ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-200' : 'bg-white border-gray-300 text-gray-700'} border px-4 py-2 text-sm font-medium`}
+  onClick={() => setIsScanReceiptModalOpen(true)}
+>
+  <Receipt className="h-4 w-4 mr-2" /> Scan Receipt
+</button>
         </div>
         
         {/* Chart and Transactions */}
@@ -393,46 +457,22 @@ const FinancialDashboard = () => {
               <ResponsiveContainer width="100%" height="100%">
                 {chartType === 'bar' ? (
                   <BarChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#374151" : "#e5e7eb"} />
-                    <XAxis dataKey="name" tick={{ fill: darkMode ? "#9CA3AF" : "#4B5563" }} />
-                    <YAxis tick={{ fill: darkMode ? "#9CA3AF" : "#4B5563" }} />
-                    <Tooltip 
-  contentStyle={{ 
-    backgroundColor: darkMode ? '#1F2937' : '#FFFFFF',
-    borderColor: darkMode ? '#374151' : '#E5E7EB',
-    color: darkMode ? '#F9FAFB' : '#111827'
-  }}
-  labelStyle={{
-    color: darkMode ? '#F9FAFB' : '#111827'
-  }}
-  itemStyle={{
-    color: darkMode ? '#F9FAFB' : '#111827'
-  }}
-/>
-                    <Bar dataKey="income" fill="#4F46E5" name="Income" />
-                    <Bar dataKey="expenses" fill="#EF4444" name="Expenses" />
-                  </BarChart>
+                  <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#374151" : "#e5e7eb"} />
+                  <XAxis dataKey="name" tick={{ fill: darkMode ? "#9CA3AF" : "#4B5563" }} />
+                  <YAxis tick={{ fill: darkMode ? "#9CA3AF" : "#4B5563" }} />
+                  <Tooltip content={<CustomChartTooltip darkMode={darkMode} />} />
+                  <Bar dataKey="income" fill="#4F46E5" name="Income" />
+                  <Bar dataKey="expenses" fill="#EF4444" name="Expenses" />
+                </BarChart>
                 ) : (
                   <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#374151" : "#e5e7eb"} />
-                    <XAxis dataKey="name" tick={{ fill: darkMode ? "#9CA3AF" : "#4B5563" }} />
-                    <YAxis tick={{ fill: darkMode ? "#9CA3AF" : "#4B5563" }} />
-                    <Tooltip 
-  contentStyle={{ 
-    backgroundColor: darkMode ? '#1F2937' : '#FFFFFF',
-    borderColor: darkMode ? '#374151' : '#E5E7EB',
-    color: darkMode ? '#F9FAFB' : '#111827'
-  }}
-  labelStyle={{
-    color: darkMode ? '#F9FAFB' : '#111827'
-  }}
-  itemStyle={{
-    color: darkMode ? '#F9FAFB' : '#111827'
-  }}
-/>
-                    <Line type="monotone" dataKey="income" stroke="#4F46E5" name="Income" />
-                    <Line type="monotone" dataKey="expenses" stroke="#EF4444" name="Expenses" />
-                  </LineChart>
+  <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#374151" : "#e5e7eb"} />
+  <XAxis dataKey="name" tick={{ fill: darkMode ? "#9CA3AF" : "#4B5563" }} />
+  <YAxis tick={{ fill: darkMode ? "#9CA3AF" : "#4B5563" }} />
+  <Tooltip content={<CustomChartTooltip darkMode={darkMode} />} />
+  <Line type="monotone" dataKey="income" stroke="#4F46E5" name="Income" />
+  <Line type="monotone" dataKey="expenses" stroke="#EF4444" name="Expenses" />
+</LineChart>
                 )}
               </ResponsiveContainer>
             </div>
@@ -564,13 +604,17 @@ const FinancialDashboard = () => {
   <div className="flex justify-between items-center mb-4">
     <h2 className={`text-lg font-semibold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>Financial Insights</h2>
     <button 
-      onClick={handleRefreshInsights} 
-      disabled={insightsLoading}
-      className={`flex items-center rounded-md ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'} px-3 py-1 text-sm transition-colors`}
-    >
-      <RefreshCw className={`h-3 w-3 mr-1 ${insightsLoading ? 'animate-spin' : ''}`} />
-      {insightsLoading ? 'Refreshing...' : 'Refresh Insights'}
-    </button>
+  onClick={handleRefreshInsights} 
+  disabled={insightsLoading}
+  className={`flex items-center rounded-md ${
+    darkMode 
+      ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' 
+      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+  } px-3 py-1 text-sm transition-colors`}
+>
+  <RefreshCw className={`h-3 w-3 mr-1 ${insightsLoading ? 'animate-spin' : ''}`} />
+  {insightsLoading ? 'Refreshing...' : 'Refresh Insights'}
+</button>
   </div>
   
   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -619,6 +663,26 @@ const FinancialDashboard = () => {
         goalsData={goalsData}
         darkMode={darkMode}
       />
+      {/* Pay Bill Modal */}
+<PayBillModal
+  isOpen={isPayBillModalOpen}
+  onClose={() => setIsPayBillModalOpen(false)}
+  darkMode={darkMode}
+/>
+
+{/* Transfer Money Modal */}
+<TransferMoneyModal
+  isOpen={isTransferMoneyModalOpen}
+  onClose={() => setIsTransferMoneyModalOpen(false)}
+  darkMode={darkMode}
+/>
+
+{/* Scan Receipt Modal */}
+<ScanReceiptModal
+  isOpen={isScanReceiptModalOpen}
+  onClose={() => setIsScanReceiptModalOpen(false)}
+  darkMode={darkMode}
+/>
     </div>
   );
 
