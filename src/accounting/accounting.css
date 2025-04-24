@@ -1,0 +1,199 @@
+.record {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px dotted #ccc;
+    margin: 1px;
+    padding: 5px;
+    font-size: small;
+}
+
+.editable-record:hover {
+  background-color: cadetblue;
+  cursor: pointer;
+}
+
+.financial-statement {
+    display: flex;
+    width: 50vw;
+    flex-direction: column;
+    border: 1px solid #ccc;
+    margin: 1px;
+    max-width: 600px;
+}
+
+.record-list {
+    width: 50%;
+    list-style: none;
+    flex: 1;
+    padding: 5px;
+}
+
+.record-list + .record-list {
+    border-left: 1px solid #ccc;
+}
+
+.record-list-header {
+    display: flex;
+    font-size: large;
+    font-weight: bold;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    justify-content: center;
+    position: relative;
+}
+.record-list-header p {
+    display: flex;
+    font-size: large;
+    font-weight: bold;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    justify-content: center;
+    position: relative;
+}
+
+.record-list-header:hover {
+    cursor: pointer;
+}
+
+.fs-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-bottom: 1px solid #ccc;
+    margin: 1px;
+    font-size: medium;
+}
+
+.input-account {
+    display: flex;
+}
+
+.input-account-name {
+    width: auto;
+}
+
+.input-account-amount {
+    width: 40%;
+}
+.input-account-button {
+    width: 20%;
+}
+
+.add-button {
+    background-color: #28a745;        
+    color: white;                    
+    border: 1.5px solid white;           
+    border-radius: 50%;              
+    width: 30px;
+    height: 30px;
+    font-size: 1.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+    position: absolute;
+    right: 0.3rem;
+}
+
+.edit-mode-button {
+    position: absolute;
+    left: 0.3rem;
+    font-size: 1.5rem;
+    transform: rotate(90deg); /* Right-facing triangle */
+    cursor: pointer;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px; 
+    transition: background-color 0.3s ease, transform 0.1s ease;
+    border-radius: 50%;              
+    border: 1.5px solid white;   
+
+}
+
+.edit-mode-button-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;              
+    border: 1.5px solid white;   
+}
+
+.suggestions {
+    list-style: none;
+    padding: 0;
+    border: 1px solid #ccc;
+    position: absolute;
+    z-index: 10;
+    width: 100%;
+    max-height: 150px;
+    overflow-y: auto;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin:0;
+    top:100%;
+    background-color: gray;
+}
+
+.suggestions .highlighted {
+    background-color: #eef;
+    cursor: pointer;
+
+}
+
+.suggestions li {
+    color: black;
+    padding: 0px;
+    cursor: pointer;
+}
+
+.suggestions li:hover {
+    background-color: #f0f0f0;
+}
+
+.input-wrapper {
+    display: flex ;
+    flex-direction: column;
+    position: relative;
+    width: 40%;
+}
+
+.record-total {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-top: 1px solid #ccc;
+    margin: 1px;
+    font-size: medium;
+}
+
+.real-input, 
+.ghost-text {
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: gray;
+  opacity: 0.5;
+  pointer-events: none;
+  font-family: inherit;
+  font-size: small;
+  z-index: 1;
+  white-space: pre;
+}
+
+.invisible-text {
+  visibility: hidden;
+}
+
+.ghost-suggestion {
+  color: black;
+}
+
+.ghost-input-wrapper {
+  position: relative;
+  font-family: inherit;
+    display: flex ;
+    flex-direction: column;
+}
